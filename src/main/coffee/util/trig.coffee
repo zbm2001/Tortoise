@@ -32,6 +32,25 @@ module.exports = {
     else
       (StrictMath.toDegrees(StrictMath.atan2(d1, d2)) + 360) % 360
 
+# (Number) => Number
+  normalizeHeading: (heading) ->
+    if (0 <= heading < 360)
+      heading
+    else
+      ((heading % 360) + 360) % 360
+
+  # (Number, Number) => Number
+  subtractHeadings: (h1, h2) ->
+    nh1  = @normalizeHeading(h1)
+    nh2  = @normalizeHeading(h2)
+    diff = nh1 - nh2
+    if -180 < diff <= 180
+      diff
+    else if diff > 0
+      diff - 360
+    else
+      diff + 360
+
   # (Number) => Number
   _squash: (x) ->
     if StrictMath.abs(x) < 3.2e-15

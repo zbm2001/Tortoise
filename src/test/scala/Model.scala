@@ -348,6 +348,10 @@ object Model {
       setup = "setup release-neutron",
       go = "auto-react",
       repetitions = 20
+    ),
+    Model(
+      path = "models/Curricular Models/BEAGLE Evolution/Fish Tank Genetic Drift.nlogo",
+      repetitions = 20
     )
   )
 }

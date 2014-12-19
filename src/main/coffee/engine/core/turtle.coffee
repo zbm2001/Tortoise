@@ -158,7 +158,7 @@ module.exports =
 
     # (Number, Number) => Agent
     patchRightAndAhead: (angle, distance) ->
-      heading = @_normalizeHeading(@_heading + angle)
+      heading = Trig.normalizeHeading(@_heading + angle)
       try
         newX = @world.topology.wrapX(@xcor + distance * Trig.sin(heading))
         newY = @world.topology.wrapY(@ycor + distance * Trig.cos(heading))
@@ -226,7 +226,7 @@ module.exports =
     # (Number, Turtle) => Unit
     right: (angle, tiedCaller = undefined) ->
       newHeading = @_heading + angle
-      @_setHeading(@_normalizeHeading(newHeading), tiedCaller)
+      @_setHeading(newHeading, tiedCaller)
       return
 
     # (Number, Number, Turtle) => Unit
@@ -385,13 +385,6 @@ module.exports =
     _linkBreedMatches: (breedName) -> (link) ->
       breedName is "LINKS" or breedName is link.getBreedName()
 
-    # (Number) => Number
-    _normalizeHeading: (heading) ->
-      if (0 <= heading < 360)
-        heading
-      else
-        ((heading % 360) + 360) % 360
-
     # () => Unit
     _seppuku: ->
       @_registerDeath(@id)
@@ -506,11 +499,11 @@ module.exports =
     _setHeading: (heading, tiedCaller = undefined) ->
 
       oldHeading = @_heading
-      @_heading  = @_normalizeHeading(heading)
+      @_heading  = Trig.normalizeHeading(heading)
       @_genVarUpdate("heading")
 
-      dh      = @_heading - oldHeading
-      [x, y]  = @getCoords()
+      dh     = Trig.subtractHeadings(@_heading, oldHeading)
+      [x, y] = @getCoords()
 
       @_fixedTiedTurtles().forEach(
         (turtle) =>

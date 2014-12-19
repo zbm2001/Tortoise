@@ -9,3 +9,23 @@
 
 Smoke
   2 + 2 => 4
+
+TransitiveTieMovement
+  O> random-seed 0
+  O> crt 3 [fd 2]
+  O> ask turtle 0 [create-link-with turtle 1 [tie]]
+  O> ask turtle 2 [create-link-with turtle 1 [tie] rt 2]
+  [xcor] of turtle 0 => -1.3273898427723028
+  [ycor] of turtle 0 =>  1.5421696086189938
+  [xcor] of turtle 1 =>  1.627347131640224
+  [ycor] of turtle 1 => -1.0719608427613574
+  [xcor] of turtle 2 => -0.38161799075308933
+  [ycor] of turtle 2 =>  1.963254366895328
+
+TiesDoingStuff
+  O> random-seed 0
+  O> crt 1
+  O> crt 1 [ fd 2 create-link-from turtle 0 [tie] ]
+  O> ask turtle 0 [ rt 45 ]
+  [xcor] of turtle 1 => 0.5176380902050423
+  [ycor] of turtle 1 => -1.9318516525781362
