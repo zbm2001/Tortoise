@@ -39,7 +39,6 @@ module.exports =
                 , maxPycor, _patchSize, wrappingAllowedInX, wrappingAllowedInY, turtleShapeList, linkShapeList) ->
       { selfManager: @selfManager, updater: @_updater, rng: @rng
       , breedManager: @breedManager, plotManager: @_plotManager } = miniWorkspace
-      @_updater.collectUpdates()
       @_updater.registerWorldState({
         worldWidth: maxPxcor - minPxcor + 1,
         worldHeight: maxPycor - minPycor + 1,

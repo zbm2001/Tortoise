@@ -29,7 +29,24 @@ module.exports =
 
     # (() => Boolean) => AbstractAgentSet[T]
     agentFilter: (f) ->
-      @filter(@_selfManager.askAgent(f))
+      arr = []
+      i   = 0
+
+      while i < @_items.length and @_items[i].id == -1
+        i += 1
+
+      while i < @_items.length
+        j = i
+        i += 1
+        while i < @_items.length and @_items[i].id == -1
+          i++
+        next   = @_items[j]
+        result = @_selfManager.askAgent(f)(next)
+        if result is true
+          arr.push(next)
+
+      @copyWithNewAgents(arr)
+      # @copyWithNewAgents(@iterator().filter(@_selfManager.askAgent(f)))
 
     # (() => Boolean) => Boolean
     agentAll: (f) ->

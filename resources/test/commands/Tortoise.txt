@@ -9,3 +9,90 @@
 
 Smoke
   2 + 2 => 4
+
+TurtleDiesWhileIteratingOverFilteredAgentset
+  O> random-seed 0
+  O> create-turtles 10 [ set size 10 ]
+  O> ask turtles with [true] [ ask one-of other turtles [ die ] ]
+  [who] of turtles => [9 4 0 2 6]
+
+TurtleDiesWhileIteratingOverConstructedAgentset
+  O> random-seed 0
+  O> create-turtles 10 [ set size 10 ]
+  O> ask (turtle-set turtle 5 turtle 2 turtle 8) [ ask one-of other turtles [ die ] ]
+  [who] of turtles => [3 7 5 4 8 6 2]
+
+CrapTest1
+  globals [logger]
+  O> random-seed 0
+  O> set logger []
+  O> create-turtles 15 [ set size 10 ]
+  O> ask turtles with [true] [ let t one-of other turtles   set logger (lput (word who " is killing " ([who] of t)) logger)   ask t [ die ]   set logger (lput (word "END " who) logger) ]
+  logger => []
+
+CrapTest2
+  globals [logger]
+  O> random-seed 0
+  O> set logger []
+  O> create-turtles 15 [ set size 10 ]
+  O> ask turtles with [true] [ let n random 10   let t (turtle n)   set logger (lput (word who " is killing " n) logger)   if t != nobody [ ask t [ die ] ]   set logger (lput (word "END " who) logger) ]
+  logger => []
+
+CrapTest3
+  globals [logger]
+  O> random-seed 0
+  O> set logger []
+  O> create-turtles 15 [ set size 10 ]
+  O> ask turtles with [true] [ let n random 10   let t (turtle n)   set logger (lput (word who " is killing " n) logger)   ask t [ die ]   set logger (lput (word "END " who) logger) ]
+  logger => []
+
+CrapTest4
+  globals [logger]
+  O> random-seed 0
+  O> set logger []
+  O> create-turtles 15 [ set size 10 ]
+  O> ask turtles with [true] [ let n random 10   set logger (lput (word who " is killing " n) logger)   ask one-of turtles [ die ]   ]
+  logger => []
+
+CrapTest5
+  globals [ts]
+  O> random-seed 0
+  O> create-turtles 2 [ set size 10 ]
+  O> set ts turtles with [true]
+  O> ask ts [ ask one-of other ts [die] ]
+  count turtles => 1
+  random 100 => 92
+
+CrapTest6
+  globals [ts]
+  O> random-seed 0
+  O> create-turtles 10 [ set size 10 ]
+  O> set ts (turtle-set turtle 5 turtle 0 turtle 2 turtle 9 turtle 8)
+  O> ask ts [ ask one-of other ts [ die ] ]
+  [who] of ts => [0 8]
+
+CrapTest7
+  globals [ts]
+  O> random-seed 0
+  O> create-turtles 15 [ set size 10 ]
+  O> set ts turtles with [true]
+  O> ask ts [ ask one-of other ts [ die ] ]
+  [who] of ts => [8 14 5 12]
+
+CrapTest8
+  globals [ts]
+  O> random-seed 0
+  O> create-turtles 15 [ set size 10 ]
+  O> set ts turtles with [true]
+  O> ask ts [ let t (turtle random 15)   if t != nobody [ ask t [ die ] ] ]
+  [who] of ts => [14 2 6 0 9 4 7 8]
+
+CrapTest9
+  globals [ts logger]
+  O> random-seed 0
+  O> set logger []
+  O> create-turtles 15 [ set size 10 ]
+  O> set ts turtles with [true]
+  O> ask ts [ let n random 15    let t (turtle n)   set logger (lput (word who " is killing " n) logger)   if t != nobody [ ask t [ die ] ] ]
+  #[who] of ts => [14 2 6 0 9 4 7 8]
+  logger => []

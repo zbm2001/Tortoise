@@ -9,6 +9,10 @@ module.exports =
     constructor: (items) ->
       @_items = items[..]
 
+    # ((T) => Boolean) => Array[T]
+    filter: (f) ->
+      @_items.filter(f)
+
     # [U] @ ((T) => U) => Array[U]
     map: (f) ->
       @_items.map(f)

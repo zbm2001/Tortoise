@@ -12,6 +12,15 @@ module.exports =
       super(items)
       @_i = 0
 
+    # ((T) => Boolean) => Array[T]
+    filter: (f) ->
+      acc = []
+      while @_hasNext()
+        next = @_next()
+        if f(next)
+          acc.push(next)
+      acc
+
     # [U] @ ((T) => U) => Array[U]
     map: (f) ->
       acc = []

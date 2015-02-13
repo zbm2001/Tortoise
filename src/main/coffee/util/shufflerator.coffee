@@ -14,6 +14,8 @@ module.exports =
       @_i       = 0
       @_nextOne = null
 
+      while @_i < @_items.length and not @_itemIsValid(@_items[@_i])
+        @_i++
       @_fetch()
 
     # [U] @ ((T) => U) => Array[U]
@@ -26,8 +28,8 @@ module.exports =
     forEach: (f) ->
       while @_hasNext()
         next = @_next()
-        if @_itemIsValid(next)
-          f(next)
+#        if @_itemIsValid(next)
+        f(next)
       return
 
     # () => Array[T]
@@ -38,7 +40,7 @@ module.exports =
 
     # () => Boolean
     _hasNext: ->
-      @_i <= @_items.length
+      @_nextOne isnt null
 
     # () => T
     _next: ->
@@ -60,7 +62,23 @@ module.exports =
     ###
     # () => Unit
     _fetch: ->
-      if @_hasNext()
+      # if @_hasNext()
+      #   if @_i < @_items.length - 1
+      #     randNum = @_i + @_nextInt(@_items.length - @_i)
+      #     @_nextOne = @_items[randNum]
+      #     @_items[randNum] = @_items[@_i]
+      #   else
+      #     @_nextOne = @_items[@_i]
+      #   @_i++
+      #   if not @_itemIsValid(@_nextOne)
+      #     @_fetch()
+      # else
+      #   @_nextOne = null
+
+
+      if @_i >= @_items.length
+        @_nextOne = null
+      else
         if @_i < @_items.length - 1
           randNum = @_i + @_nextInt(@_items.length - @_i)
           @_nextOne = @_items[randNum]
@@ -68,7 +86,7 @@ module.exports =
         else
           @_nextOne = @_items[@_i]
         @_i++
-      else
-        @_nextOne = null
+        if not @_itemIsValid(@_nextOne)
+          @_fetch()
 
       return
