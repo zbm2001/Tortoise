@@ -49,7 +49,7 @@ trait DockingSuite extends FunSuite with TestLogger {
   }
 }
 
-class DockingFixture(name: String, nashorn: Nashorn) extends Fixture(name) {
+class DockingFixture(name: String, nashorn: Nashorn) extends Fixture(name) with EvaluationManager {
 
   def mirrorables: Iterable[mirror.Mirrorable] =
     mirror.Mirrorables.allMirrorables(workspace.world)
@@ -68,6 +68,10 @@ class DockingFixture(name: String, nashorn: Nashorn) extends Fixture(name) {
                             //  is empty --JAB (12/5/14)
       useGenerator = false  // so we don't need ASM. also to save time
     )
+
+  override protected def evaluationEngine  = nashorn
+  override protected def currentProcedures = workspace.procedures
+  override protected def currentProgram    = workspace.world.program
 
   def compare(reporter: String) {
     runReporter(Reporter(reporter,

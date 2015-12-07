@@ -3,6 +3,9 @@
 package org.nlogo.tortoise
 
 import
+  javax.script.ScriptException
+
+import
   org.scalatest.{ exceptions, Assertions },
     Assertions.{ assertResult, fail },
     exceptions.{ TestPendingException, TestFailedException }
@@ -13,13 +16,18 @@ import
       FrontEndInterface.{ ProceduresMap, NoProcedures },
     headless.test.{ AbstractFixture, Command, Compile, CompileError, RuntimeError, Reporter, Success, TestMode }
 
+import
+  dock.EvaluationManager,
+  jsengine.Nashorn
 
-import jsengine.Nashorn
-
-class TortoiseFixture(name: String, nashorn: Nashorn, notImplemented: (String) => Nothing) extends Fixture {
+class TortoiseFixture(name: String, nashorn: Nashorn, notImplemented: (String) => Nothing) extends Fixture with EvaluationManager {
 
   private var program: Program = Program.empty
   private var procs: ProceduresMap = NoProcedures
+
+  override protected def evaluationEngine  = nashorn
+  override protected def currentProcedures = procs
+  override protected def currentProgram    = program
 
   private def modelJS(model: CModel): String = {
     val compilation = cautiously(Compiler.compileProcedures(model))
@@ -91,17 +99,26 @@ class TortoiseFixture(name: String, nashorn: Nashorn, notImplemented: (String) =
 
   private def expectRuntimeError(res: => Any, msg: String): Unit = {
     try {
-      res
-      fail("no RuntimeError occurred")
+      try {
+        res
+        fail("no RuntimeError occurred")
+      }
+      catch {
+        // Compilation exceptions from `run`/`run-result` get wrapped up by Nashorn.
+        // We undo that here. --JAB (12/3/15)
+        case ex: RuntimeException if ex.getCause != null => throw ex.getCause
+        case ex: Exception                               => throw ex
+      }
     }
     catch {
-      case ex: javax.script.ScriptException =>
+      case ex: ScriptException =>
         val AfterFirstColonRegex        = "^.*?: (.*)".r // Nashorn doesn't make JS Exceptions easy
         val AfterFirstColonRegex(exMsg) = ex.getCause.getMessage
         assertResult(msg)(exMsg)
       case e: TestFailedException => throw e
       case e: TestPendingException => throw e
-      case e: Exception => fail(s"expected RuntimeError, but got ${e.getClass.getSimpleName}")
+      case e: Exception =>
+        fail(s"expected RuntimeError, but got ${e.getClass.getSimpleName}")
     }
   }
 

@@ -69,7 +69,7 @@ class TestReporters extends ReporterTests with TortoiseFinder {
   import Freebies._
   override val freebies = Map(
     "Misc::Version" -> "Assumes JVM NetLogo version numbers"
-  ) ++ sortingHeteroListReporters ++ evalNotSupportedReporters ++ incErrorDetectReporters
+  ) ++ sortingHeteroListReporters ++ incErrorDetectReporters
 }
 
 class TestCommands extends CommandTests with TortoiseFinder {
@@ -88,7 +88,6 @@ private[tortoise] object Freebies {
   def cmdTaskRepMismatchCommands = asFreebieMap(cmdTaskRepMismatchCommandNames, cmdTaskRepMismatchStr)
 
   def incErrorDetectReporters    = asFreebieMap(incErrorDetectReporterNames,    incErrorDetectStr)
-  def evalNotSupportedReporters  = asFreebieMap(evalNotSupportedReporterNames,  evalNotSupportedStr)
   def sortingHeteroListReporters = asFreebieMap(sortingHeteroListReporterNames, sortingHeteroListStr)
 
   private def asFreebieMap(names: Seq[String], msg: String) = names.map(_ -> msg).toMap
@@ -148,8 +147,6 @@ private[tortoise] object Freebies {
     "Numbers::Mean1",
     "Numbers::Variance1",
     "Numbers::Variance2",
-    "RunResult::RunResult4",
-    "RunResult::RunResult5",
     "Strings::StrButFirst2",
     "Strings::StrButLast2",
     "Strings::StrRemoveItem4",
@@ -207,8 +204,6 @@ private[tortoise] object Freebies {
     "Random::OneOfWithAgentSets",
     "Random::RejectBadSeeds",
     "ReporterTasks::NotEnoughInputs",
-    "Run::RunRejectExtraArgumentsIfFirstArgIsString",
-    "Run::RunResultRejectExtraArgumentsIfFirstArgIsString",
     "Sort::SortingTypeErrors",
     "Sort::sort-by-catches-java-7-general-contract-violation-error",
     "Sort::sort-on-rejects-mixed-types",
@@ -220,26 +215,11 @@ private[tortoise] object Freebies {
     )
 
   // perhaps never to be supported
-  private val evalNotSupportedStr = "run/runresult on strings not supported"
-  private val evalNotSupportedReporterNames = Seq(
-    "RunResult::RunResult1",
-    "RunResult::RunResult2",
-    "RunResult::RunResult3"
-  )
+  private val evalNotSupportedStr = "run/runresult only support global scope and observer context"
   private val evalNotSupportedCommandNames = Seq(
-    "ControlStructures::Run1",
-    "ControlStructures::Run2",
-    "ControlStructures::Run3",
-    "ControlStructures::Run4",
-    "ControlStructures::Run5",
-    "ControlStructures::Run6",
-    "ControlStructures::Run7",
-    "ControlStructures::Run8",
-    "Run::LuisIzquierdoRun1",
-    "Run::LuisIzquierdoRun2",
-    "Run::LuisIzquierdoRunResult1",
     "Run::LuisIzquierdoRunResult2",
-    "Run::run-evaluate-string-input-only-once"
+    "ControlStructures::Run2",
+    "ControlStructures::Run3"
   )
 
   // requires Tortoise compiler changes

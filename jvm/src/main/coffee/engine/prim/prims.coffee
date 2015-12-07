@@ -25,8 +25,8 @@ module.exports =
 
     _everyMap: undefined # Object[String, Timer]
 
-    # (Dump, Hasher, RNG) => Prims
-    constructor: (@_dumper, @_hasher, @_rng) ->
+    # (Dump, Hasher, RNG, EvalConfig) => Prims
+    constructor: (@_dumper, @_hasher, @_rng, @_evalConfig) ->
       @_everyMap = {}
 
     # () => Nothing
@@ -236,6 +236,27 @@ module.exports =
         q   += 1
         sum -= StrictMath.log(1 - @_rng.nextDouble())
       q
+
+    # ((Task, Any*) | String) => Unit
+    run: (args...) ->
+      if NLType(args[0]).isString()
+        if args.length is 1
+          @_evalConfig.evalCommand(args[0])
+        else
+          throw new Error("run doesn't accept further inputs if the first is a string")
+      else
+        args[0](args.slice(1)...)
+      return
+
+    # ((Task, Any*) | String) => Any
+    runResult: (args...) ->
+      if NLType(args[0]).isString()
+        if args.length is 1
+          @_evalConfig.evalReporter(args[0])
+        else
+          throw new Error("runresult doesn't accept further inputs if the first is a string")
+      else
+        args[0](args.slice(1)...)
 
     # [T <: (Array[Turtle]|Turtle|AbstractAgentSet[Turtle])] @ (T*) => TurtleSet
     turtleSet: (inputs...) ->

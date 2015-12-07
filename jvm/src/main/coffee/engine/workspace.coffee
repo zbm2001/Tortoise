@@ -30,6 +30,7 @@ module.exports =
     worldArgs = arguments # If you want `Workspace` to take more parameters--parameters not related to `World`--just keep returning new functions
 
     dialogConfig  = modelConfig?.dialog  ? new UserDialogConfig
+    evalConfig    = modelConfig?.eval    ? Evaluator
     mouseConfig   = modelConfig?.mouse   ? new MouseConfig
     outputConfig  = modelConfig?.output  ? new OutputConfig
     plots         = modelConfig?.plots   ? []
@@ -40,7 +41,7 @@ module.exports =
     selfManager  = new SelfManager
     breedManager = new BreedManager(breedObjs, turtlesOwns, linksOwns)
     plotManager  = new PlotManager(plots)
-    prims        = new Prims(Dump, Hasher, rng)
+    prims        = new Prims(Dump, Hasher, rng, evalConfig)
     selfPrims    = new SelfPrims(selfManager.self)
     timer        = new Timer
     updater      = new Updater
