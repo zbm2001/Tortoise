@@ -1,9 +1,8 @@
 # (C) Uri Wilensky. https://github.com/NetLogo/Tortoise
 
-_                         = require('lodash')
-LinkSet                   = require('./linkset')
-Nobody                    = require('./nobody')
-TurtleSet                 = require('./turtleset')
+_         = require('lodash')
+LinkSet   = require('./linkset')
+TurtleSet = require('./turtleset')
 
 { DeathInterrupt, ignoring } = require('util/exception')
 

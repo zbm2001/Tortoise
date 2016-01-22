@@ -5,7 +5,6 @@
 _           = require('lodash')
 Link        = require('../link')
 LinkSet     = require('../linkset')
-Nobody      = require('../nobody')
 Builtins    = require('../structure/builtins')
 IDManager   = require('./idmanager')
 SortedLinks = require('./sortedlinks')

@@ -1,7 +1,6 @@
 # (C) Uri Wilensky. https://github.com/NetLogo/Tortoise
 
 _              = require('lodash')
-Nobody         = require('./nobody')
 projectionSort = require('./projectionsort')
 NLType         = require('./typechecker')
 Seq            = require('util/seq')

@@ -8,7 +8,6 @@ Watch   = { toInt: 3 }
 
 _               = require('lodash')
 agentToInt      = require('./agenttoint')
-Nobody          = require('./nobody')
 NLType          = require('./typechecker')
 VariableManager = require('./structure/variablemanager')
 

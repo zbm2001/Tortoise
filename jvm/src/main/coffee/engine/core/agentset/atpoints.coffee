@@ -4,7 +4,6 @@
 # and then this awful dependency on `Dumper` can go away.  --JAB (1/7/16)
 _      = require('lodash')
 Dumper = require('../../dump')
-Nobody = require('../nobody')
 NLType = require('../typechecker')
 
 # In this file: `this.type` is `AbstractAgentSet[T]`

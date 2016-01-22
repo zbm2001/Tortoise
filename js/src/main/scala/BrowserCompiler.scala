@@ -12,14 +12,14 @@ import
     TortoiseJson._
 
 import
-  org.nlogo.core.{ CompilerException, LiteralParser, model },
+  org.nlogo.core.{ CompilerException, LiteralParser, model, Nobody => NlogoNobody },
     model.ModelReader
 
 import
   scala.reflect.ClassTag
 
 import
-  scala.scalajs.js.annotation.JSExport
+  scala.scalajs.js.annotation.{ JSExport, JSExportAll }
 
 import
   scalaz.{ NonEmptyList, Scalaz, std, Validation, ValidationNel },
@@ -104,6 +104,20 @@ class BrowserCompiler {
   private def readNative[A](n: NativeJson)(implicit ev: JsonReader[TortoiseJson, A]): ValidationNel[TortoiseFailure, A] =
     JsonReader.read(toTortoise(n))(ev).leftMap(_.map(s => FailureString(s)))
 
+}
+
+@JSExport("ScalaNobody")
+@JSExportAll
+object Nobody {
+  /*
+    Inclusion of `ask` is inspired by the fact that, since a primitive like `create-link-with` can
+    return `nobody`, and it can also take an initialization block for the to-be-created thing, either
+    the init block must be branched against or `nobody` must ignore it  --JAB (7/18/14)
+  */
+  def ask(): Unit         = {}
+  def id                  = -1
+  def isDead()            = true
+  override def toString() = "nobody"
 }
 
 object BrowserCompiler {

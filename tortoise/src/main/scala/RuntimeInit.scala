@@ -19,6 +19,7 @@ import
 class RuntimeInit(program: Program, model: Model, onTickFunction: String = jsFunction()) {
 
   def init: Seq[TortoiseSymbol] = Seq(
+    JsDeclare("Nobody",       "ScalaNobody()"),
     JsDeclare("turtleShapes", shapeList(new ShapeList(AgentKind.Turtle, model.turtleShapes))),
     JsDeclare("linkShapes",   shapeList(new ShapeList(AgentKind.Link,   model.linkShapes))),
 
@@ -46,7 +47,6 @@ class RuntimeInit(program: Program, model: Model, onTickFunction: String = jsFun
     JsRequire("ColorModel",     "engine/core/colormodel"),
     JsRequire("Link",           "engine/core/link"),
     JsRequire("LinkSet",        "engine/core/linkset"),
-    JsRequire("Nobody",         "engine/core/nobody"),
     JsRequire("PatchSet",       "engine/core/patchset"),
     JsRequire("Turtle",         "engine/core/turtle"),
     JsRequire("TurtleSet",      "engine/core/turtleset"),

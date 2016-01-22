@@ -31,6 +31,9 @@ class Nashorn {
   // ensure exact matching results
   engine.put("StrictMath", Strict)
 
+  val compilerStr = io.Source.fromFile("./js/target/tortoise-compiler.js").mkString // Satanic!
+  engine.eval(compilerStr)
+
   for (lib <- jsLibs)
     engine.eval(Resource.asString(lib))
 

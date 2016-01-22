@@ -3,7 +3,6 @@
 _                 = require('lodash')
 AbstractAgentSet  = require('./abstractagentset')
 ColorModel        = require('engine/core/colormodel')
-Nobody            = require('./nobody')
 TurtleLinkManager = require('./turtlelinkmanager')
 TurtleSet         = require('./turtleset')
 NLType            = require('./typechecker')

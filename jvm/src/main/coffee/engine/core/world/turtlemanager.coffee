@@ -2,7 +2,6 @@
 
 _          = require('lodash')
 ColorModel = require('engine/core/colormodel')
-Nobody     = require('../nobody')
 Turtle     = require('../turtle')
 TurtleSet  = require('../turtleset')
 Builtins   = require('../structure/builtins')

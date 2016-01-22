@@ -1,7 +1,6 @@
 # (C) Uri Wilensky. https://github.com/NetLogo/Tortoise
 
 _               = require('lodash')
-Nobody          = require('./nobody')
 TurtleSet       = require('./turtleset')
 VariableManager = require('./structure/variablemanager')
 Comparator      = require('util/comparator')
