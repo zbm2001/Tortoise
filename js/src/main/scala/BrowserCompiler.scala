@@ -12,8 +12,10 @@ import
     TortoiseJson._
 
 import
-  org.nlogo.core.{ CompilerException, LiteralParser, model, Nobody => NlogoNobody },
-    model.ModelReader
+  org.nlogo.{ core, parse },
+    core.{ CompilerException, LiteralParser, LogoList, model, Nobody => NlogoNobody },
+      model.ModelReader,
+    parse.CompilerUtilities
 
 import
   scala.reflect.ClassTag
@@ -66,7 +68,7 @@ class BrowserCompiler {
       for {
         tortoiseReq   <- readNative[JsObject](exportRequest)
         parsedRequest <- ExportRequest.read(tortoiseReq).leftMap(_.map(FailureString))
-      } yield ModelReader.formatModel(parsedRequest.toModel, literalParser)
+      } yield ModelReader.formatModel(parsedRequest.toModel, StandardLiteralParser)
 
     JsonLibrary.toNative(model.leftMap(_.map(fail => fail: TortoiseFailure)).toJsonObj)
   }
@@ -108,7 +110,7 @@ class BrowserCompiler {
 
 @JSExport("ScalaNobody")
 @JSExportAll
-object Nobody {
+object Derpbody {
   /*
     Inclusion of `ask` is inspired by the fact that, since a primitive like `create-link-with` can
     return `nobody`, and it can also take an initialization block for the to-be-created thing, either
@@ -118,6 +120,47 @@ object Nobody {
   def id                  = -1
   def isDead()            = true
   override def toString() = "nobody"
+}
+
+@JSExport("LiteralConverter")
+object LiteralConverter {
+
+  import scala.annotation.meta.field
+
+  class WrappedException(@(JSExport @field) val message: String) extends Throwable
+
+  @JSExport
+  def nlStrToJS(string: String): AnyRef = {
+    nlToJS(StandardLiteralParser.readFromString(string))
+  }
+
+  private def nlToJS(value: => AnyRef): AnyRef = {
+
+    import scala.scalajs.js.JSConverters.genTravConvertible2JSRichGenTrav
+
+    def nlValueToJSValue: PartialFunction[AnyRef, AnyRef] = {
+      case l: LogoList => l.toList.map(nlValueToJSValue).toJSArray
+      case NlogoNobody => Derpbody
+      case x           => x
+    }
+
+    try nlValueToJSValue(value)
+    catch {
+      case ex: Exception => throw new WrappedException(ex.getMessage)
+    }
+
+  }
+
+}
+
+object StandardLiteralParser extends LiteralParser {
+
+  override def readFromString(string: String): AnyRef =
+    CompilerUtilities.readFromString(string)
+
+  override def readNumberFromString(string: String): AnyRef =
+    CompilerUtilities.readNumberFromString(string)
+
 }
 
 object BrowserCompiler {
@@ -211,8 +254,4 @@ object BrowserCompiler {
         compiledModel.widgets)
   }
 
-  object literalParser extends LiteralParser {
-    def readFromString(s: String): AnyRef            = throw new Exception("Invalid NetLogo Web Model")
-    def readNumberFromString(source: String): AnyRef = throw new Exception("Invalid NetLogo Web Model")
-  }
 }

@@ -2,8 +2,6 @@
 
 package org.nlogo.tortoise
 
-import BrowserCompiler.literalParser
-
 import
   org.nlogo.core.{ model, Model, Shape, Slider, View },
     model.ModelReader,
@@ -91,7 +89,7 @@ object BrowserCompilerTest extends TestSuite {
     }
 
     "testReturnsErrorWhenCommandsAreOfWrongType"-{
-      val formattedModel = ModelReader.formatModel(validModel, literalParser)
+      val formattedModel = ModelReader.formatModel(validModel, StandardLiteralParser)
       val commands       = toNative(JsString("foobar"))
       val compiledModel  = withBrowserCompiler(_.fromNlogo(formattedModel, commands))
       assert(! isSuccess(compiledModel))
@@ -115,7 +113,7 @@ object BrowserCompilerTest extends TestSuite {
       val exportResult = withBrowserCompiler(_.exportNlogo(modelToCompilationRequest(validModel)))
       assert(exportResult[Boolean]("success"))
       val exportedNlogo = exportResult[String]("result")
-      val parsedModel = ModelReader.parseModel(exportedNlogo, literalParser)
+      val parsedModel = ModelReader.parseModel(exportedNlogo, StandardLiteralParser)
       assert(parsedModel.code                   == validModel.code)
       assert(parsedModel.info                   == validModel.info)
       assert(parsedModel.widgets                == validModel.widgets)
@@ -208,7 +206,7 @@ object BrowserCompilerTest extends TestSuite {
 
   private def compileModel(m: Model, commands: Seq[String] = Seq()): JsObject =
     withBrowserCompiler { b =>
-      val formattedModel    = ModelReader.formatModel(m, literalParser)
+      val formattedModel    = ModelReader.formatModel(m, StandardLiteralParser)
       val formattedCommands = toNative(JsArray(commands.map(s => JsString(s))))
       b.fromNlogo(formattedModel, formattedCommands)
     }

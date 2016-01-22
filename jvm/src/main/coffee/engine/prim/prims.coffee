@@ -236,6 +236,12 @@ module.exports =
         sum -= StrictMath.log(1 - @_rng.nextDouble())
       q
 
+    # (String) => Any
+    readFromString: (str) ->
+      try LiteralConverter().nlStrToJS(str)
+      catch ex
+        throw new Error(ex.message)
+
     # [T <: (Array[Turtle]|Turtle|AbstractAgentSet[Turtle])] @ (T*) => TurtleSet
     turtleSet: (inputs...) ->
       @_createAgentSet(inputs, Turtle, TurtleSet)

@@ -32,6 +32,7 @@ trait BrowserReporter {
   protected def writeFixtureDocument(filename: String, fixture: ArrayBuffer[String]): Unit =
     writeToFile(filename) (
       html(head(
+        script(`type` :=  "text/javascript", src := "../../../js/target/tortoise-compiler.js"),
         script(`type` :=  "text/javascript", src := "../classes/js/tortoise-engine.js"),
         script(`type` :=  "text/javascript", raw(fixture.mkString("\n")))
       ))

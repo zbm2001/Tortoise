@@ -53,7 +53,7 @@ private[tortoise] trait TestLogger extends BrowserReporter {
       runTest
     }
     catch {
-      case e@(_: TestFailedException | _: ScriptException | _: AssertionError) =>
+      case e@(_: TestFailedException | _: ScriptException | _: AssertionError | _: MatchError) =>
         testFailed(suite, name)
         throw e
     }
