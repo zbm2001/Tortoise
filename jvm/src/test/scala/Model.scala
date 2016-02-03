@@ -465,6 +465,11 @@ object Model {
                 |set event-8-triggered? true
                 |set event-9-triggered? true
               """.stripMargin
+    ),
+    Model(
+      path = "models/Sample Models/Mathematics/Probability/ProbLab/Unverified/ProbLab Genetics.nlogo",
+      repetitions = 20,
+      setup = "setup add-fish 50"
     )
   )
 }
