@@ -12,22 +12,22 @@ import
     TortoiseJson._
 
 import
-  org.nlogo.{ core, parse },
-    core.{ CompilerException, LiteralParser, LogoList, model, Nobody => NlogoNobody },
-      model.ModelReader,
-    parse.CompilerUtilities
+  org.nlogo.core.{ CompilerException, model },
+    model.ModelReader
 
 import
-  scala.reflect.ClassTag
-
-import
-  scala.scalajs.js.annotation.{ JSExport, JSExportAll }
+  scala.{ reflect, scalajs },
+    reflect.ClassTag,
+    scalajs.js.annotation.JSExport
 
 import
   scalaz.{ NonEmptyList, Scalaz, std, Validation, ValidationNel },
     std.list._,
     Scalaz.ToValidationOps,
     Validation.FlatMap.ValidationFlatMapRequested
+
+import
+  literal.StandardLiteralParser
 
 @JSExport("BrowserCompiler")
 class BrowserCompiler {
@@ -105,61 +105,6 @@ class BrowserCompiler {
 
   private def readNative[A](n: NativeJson)(implicit ev: JsonReader[TortoiseJson, A]): ValidationNel[TortoiseFailure, A] =
     JsonReader.read(toTortoise(n))(ev).leftMap(_.map(s => FailureString(s)))
-
-}
-
-@JSExport("ScalaNobody")
-@JSExportAll
-object Derpbody {
-  /*
-    Inclusion of `ask` is inspired by the fact that, since a primitive like `create-link-with` can
-    return `nobody`, and it can also take an initialization block for the to-be-created thing, either
-    the init block must be branched against or `nobody` must ignore it  --JAB (7/18/14)
-  */
-  def ask(): Unit         = {}
-  def id                  = -1
-  def isDead()            = true
-  override def toString() = "nobody"
-}
-
-@JSExport("LiteralConverter")
-object LiteralConverter {
-
-  import scala.annotation.meta.field
-
-  class WrappedException(@(JSExport @field) val message: String) extends Throwable
-
-  @JSExport
-  def nlStrToJS(string: String): AnyRef = {
-    nlToJS(StandardLiteralParser.readFromString(string))
-  }
-
-  private def nlToJS(value: => AnyRef): AnyRef = {
-
-    import scala.scalajs.js.JSConverters.genTravConvertible2JSRichGenTrav
-
-    def nlValueToJSValue: PartialFunction[AnyRef, AnyRef] = {
-      case l: LogoList => l.toList.map(nlValueToJSValue).toJSArray
-      case NlogoNobody => Derpbody
-      case x           => x
-    }
-
-    try nlValueToJSValue(value)
-    catch {
-      case ex: Exception => throw new WrappedException(ex.getMessage)
-    }
-
-  }
-
-}
-
-object StandardLiteralParser extends LiteralParser {
-
-  override def readFromString(string: String): AnyRef =
-    CompilerUtilities.readFromString(string)
-
-  override def readNumberFromString(string: String): AnyRef =
-    CompilerUtilities.readNumberFromString(string)
 
 }
 

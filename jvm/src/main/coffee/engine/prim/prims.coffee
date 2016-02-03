@@ -238,7 +238,7 @@ module.exports =
 
     # (String) => Any
     readFromString: (str) ->
-      try LiteralConverter().nlStrToJS(str)
+      try org.nlogo.tortoise.literal.Converter().nlStrToJS(str)
       catch ex
         throw new Error(ex.message)
 
