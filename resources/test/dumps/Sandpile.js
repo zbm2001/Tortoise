@@ -17,7 +17,7 @@ var Tasks = tortoise_require('engine/prim/tasks');
 var Turtle = tortoise_require('engine/core/turtle');
 var TurtleSet = tortoise_require('engine/core/turtleset');
 var notImplemented = tortoise_require('util/notimplemented');
-var Nobody = ScalaNobody();
+var Nobody = org.nlogo.tortoise.literal.Nobody();
 var linkShapes = {"default":{"name":"default","direction-indicator":{"name":"link direction","editableColorIndex":0,"rotate":true,"elements":[{"x1":150,"y1":150,"x2":90,"y2":180,"type":"line","color":"rgba(141, 141, 141, 1.0)","filled":false,"marked":true},{"x1":150,"y1":150,"x2":210,"y2":180,"type":"line","color":"rgba(141, 141, 141, 1.0)","filled":false,"marked":true}]},"curviness":0.0,"lines":[{"x-offset":-0.2,"is-visible":false,"dash-pattern":[0.0,1.0]},{"x-offset":0.0,"is-visible":true,"dash-pattern":[1.0,0.0]},{"x-offset":0.2,"is-visible":false,"dash-pattern":[0.0,1.0]}]}};
 var modelConfig = (typeof window.modelConfig !== "undefined" && window.modelConfig !== null) ? window.modelConfig : {};
 var turtleShapes = {"default":{"name":"default","editableColorIndex":0,"rotate":true,"elements":[{"xcors":[150,40,150,260],"ycors":[5,250,205,250],"type":"polygon","color":"rgba(141, 141, 141, 1.0)","filled":true,"marked":true}]}};
@@ -133,7 +133,7 @@ var procedures = (function() {
     world.observer.setGlobal("selected-color", 55);
     world.observer.setGlobal("selected-patch", Nobody);
     world.patches().ask(function() {
-      SelfManager.self().setPatchVariable("n", (setupTask)());
+      SelfManager.self().setPatchVariable("n", Prims.runResult(setupTask));
       SelfManager.self().setPatchVariable("n-stack", []);
       SelfManager.self().setPatchVariable("base-color", world.observer.getGlobal("default-color"));
     }, true);
