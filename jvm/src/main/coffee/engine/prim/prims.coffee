@@ -24,9 +24,8 @@ module.exports =
 
     _everyMap: undefined # Object[String, Timer]
 
-    # (Dump, Hasher, RNG) => Prims
-    constructor: (@_dumper, @_hasher, @_rng) ->
-      @_everyMap = {}
+    # (Dump, Hasher, RNG, EvalConfig) => Prims
+    constructor: (@_dumper, @_hasher, @_rng, @_evalConfig) ->
 
     # () => Nothing
     boom: ->
@@ -238,9 +237,28 @@ module.exports =
 
     # (String) => Any
     readFromString: (str) ->
-      try org.nlogo.tortoise.literal.Converter().nlStrToJS(str)
-      catch ex
-        throw new Error(ex.message)
+      @_evalConfig.readFromString(str)
+
+    # ((Task, Any*) | String) => Unit
+    run: (args...) ->
+      if NLType(args[0]).isString()
+        if args.length is 1
+          @_evalConfig.evalCommand(args[0])
+        else
+          throw new Error("run doesn't accept further inputs if the first is a string")
+      else
+        args[0](args.slice(1)...)
+      return
+
+    # ((Task, Any*) | String) => Any
+    runResult: (args...) ->
+      if NLType(args[0]).isString()
+        if args.length is 1
+          @_evalConfig.evalReporter(args[0])
+        else
+          throw new Error("runresult doesn't accept further inputs if the first is a string")
+      else
+        args[0](args.slice(1)...)
 
     # [T <: (Array[Turtle]|Turtle|AbstractAgentSet[Turtle])] @ (T*) => TurtleSet
     turtleSet: (inputs...) ->

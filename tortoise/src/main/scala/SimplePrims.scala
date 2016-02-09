@@ -198,6 +198,7 @@ object SimplePrims {
         case _: prim.etc._dateandtime       => "Prims.dateAndTime"
         case _: prim.etc._nanotime          => "Prims.nanoTime"
         case _: prim.etc._readfromstring    => "Prims.readFromString"
+        case _: prim.etc._runresult         => "Prims.runResult"
 
       }
   }
@@ -320,6 +321,7 @@ object SimplePrims {
         case _: prim.etc._layoutspring     => "LayoutManager.layoutSpring"
         case _: prim.etc._changetopology   => "world.changeTopology"
         case _: prim.etc._usermessage      => "UserDialogPrims.confirm"
+        case _: prim.etc._run              => "Prims.run"
 
         // Unimplemented
         case _: prim.etc._display     => "notImplemented('display', undefined)"

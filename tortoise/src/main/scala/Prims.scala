@@ -162,9 +162,6 @@ trait ReporterPrims extends PrimUtils {
       case tv: prim._taskvariable => s"taskArguments[${tv.vn - 1}]"
       case _:  prim._reportertask => s"Tasks.reporterTask(${handlers.fun(r.args(0), isReporter = true, isTask = true)})"
       case _:  prim._commandtask  => s"Tasks.commandTask(${handlers.fun(r.args(0), isReporter = false, isTask = true)})"
-      case rr: prim.etc._runresult =>
-        val taskInputs = args.tail.mkString(", ")
-        s"(${arg(0)})($taskInputs)"
 
       case _ if compilerFlags.generateUnimplemented =>
         generateNotImplementedStub(r.reporter.getClass.getName.drop(1))
@@ -229,9 +226,6 @@ trait CommandPrims extends PrimUtils {
         s"var ${handlers.ident(l.let.name)} = ${arg(0)};"
       case _: prim.etc._withlocalrandomness =>
         s"workspace.rng.withClone(function() { ${handlers.commands(s.args(0))} })"
-      case _: prim.etc._run              =>
-        val taskInputs = args.tail.mkString(", ")
-        s"(${arg(0)})($taskInputs);"
       case _: prim.etc._foreach          =>
         val lists = args.init.mkString(", ")
         s"Tasks.forEach(${arg(s.args.size - 1)}, $lists);"

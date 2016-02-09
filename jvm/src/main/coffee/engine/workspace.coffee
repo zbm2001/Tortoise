@@ -15,6 +15,7 @@ SelfPrims     = require('./prim/selfprims')
 RNG           = require('util/rng')
 Timer         = require('util/timer')
 
+{ Config: EvalConfig                         }       = require('./prim/evalprims')
 { Config: MouseConfig,      Prims: MousePrims }      = require('./prim/mouseprims')
 { Config: OutputConfig,     Prims: OutputPrims }     = require('./prim/outputprims')
 { Config: PrintConfig,      Prims: PrintPrims }      = require('./prim/printprims')
@@ -30,6 +31,7 @@ module.exports =
     worldArgs = arguments # If you want `Workspace` to take more parameters--parameters not related to `World`--just keep returning new functions
 
     dialogConfig  = modelConfig?.dialog  ? new UserDialogConfig
+    evalConfig    = modelConfig?.eval    ? new EvalConfig
     mouseConfig   = modelConfig?.mouse   ? new MouseConfig
     outputConfig  = modelConfig?.output  ? new OutputConfig
     plots         = modelConfig?.plots   ? []
