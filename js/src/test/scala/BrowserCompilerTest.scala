@@ -16,6 +16,9 @@ import
     WidgetToJson.widget2Json
 
 import
+  literal.StandardLiteralParser
+
+import
   scala.{ collection, scalajs },
     collection.immutable.ListMap,
     scalajs.js,
