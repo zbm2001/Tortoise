@@ -77,7 +77,7 @@ var procedures = (function() {
           SelfManager.self().setVariable("steps", (SelfManager.self().getVariable("steps") - 1));
         }
         else {
-          Prims.run(SelfManager.self().getVariable("next-task"));
+          (SelfManager.self().getVariable("next-task"))();
           procedures.wiggle();
         }
         SelfManager.self().fd(1);
