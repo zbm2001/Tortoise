@@ -69,7 +69,6 @@ lazy val tortoise = CrossProject("tortoise", file("."), new CrossType {
   dependsOn(macros % "compile-internal->compile;test-internal->test").
   settings(Depend.settings: _*).
   settings(commonSettings: _*).
-  jvmConfigure(_.addSbtFiles(file("travis.sbt"))).
   jvmSettings(FastMediumSlow.settings: _*).
   jvmSettings(Depend.settings: _*).
   jvmSettings(
@@ -159,7 +158,7 @@ lazy val netLogoWeb: Project = (project in file("netlogo-web")).
       fullOptJS in Compile in tortoiseJS))
 
 lazy val engineScalaJS: Project =
-  (project in file("jvm/src/main/scalajs")).
+  (project in file("engine/src/main/scalajs")).
     enablePlugins(ScalaJSPlugin).
     settings(commonSettings: _*).
     settings(name := "EngineScalaJS")

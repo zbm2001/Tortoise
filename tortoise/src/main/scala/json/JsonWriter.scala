@@ -3,7 +3,7 @@
 package org.nlogo.tortoise.json
 
 import
-  JsonLibrary.{ nativeToString, toNative }
+  JsonLibraryJVM.{ nativeToString, toNative }
 
 import
   TortoiseJson.{ fields, JsArray, JsBool, JsDouble, JsInt, JsObject, JsString }

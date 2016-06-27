@@ -10,8 +10,8 @@ import
     Shape.LinkLine
 
 import
-  json.{ JsonLibrary, JsonLinkLine, JsonLinkShape, JsonReader, JsonVectorShape, ShapeToJsonConverters, TortoiseJson, WidgetToJson },
-    JsonLibrary.{ Native => NativeJson, toNative },
+  json.{ JsonLibrarySJS, JsonLinkLine, JsonLinkShape, JsonReader, JsonVectorShape, ShapeToJsonConverters, TortoiseJson, WidgetToJson },
+    JsonLibrarySJS.{ Native => NativeJson, toNative },
     JsonReader.{ jsObject2RichJsObject, jsArray2RichJsArray },
     ShapeToJsonConverters.shape2Json,
     TortoiseJson.{ fields, JsArray, JsObject, JsString },
@@ -192,7 +192,7 @@ object BrowserCompilerTest extends TestSuite {
     // this song and dance is to turn a string with Javascript Objects containing functions
     // into TortoiseJson objects
     val widgetsString = compiledModel[String]("widgets")
-    val widgetsJson = JsonLibrary.toTortoise(js.eval(widgetsString))
+    val widgetsJson = JsonLibrarySJS.toTortoise(js.eval(widgetsString))
     widgetsJson match {
       case JsArray(elems) =>
         val compiledWidgets = elems.collect { case jo : JsObject => jo }
@@ -213,7 +213,7 @@ object BrowserCompilerTest extends TestSuite {
       b.fromNlogo(formattedModel, formattedCommands)
     }
 
-  private def withBrowserCompiler(f: BrowserCompiler => JsonLibrary.Native): JsObject =
-    JsonLibrary.toTortoise(f(new BrowserCompiler)).asInstanceOf[JsObject]
+  private def withBrowserCompiler(f: BrowserCompiler => JsonLibrarySJS.Native): JsObject =
+    JsonLibrarySJS.toTortoise(f(new BrowserCompiler)).asInstanceOf[JsObject]
 
 }

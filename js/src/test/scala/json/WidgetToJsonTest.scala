@@ -3,7 +3,7 @@
 package org.nlogo.tortoise.json
 
 import
-  JsonLibrary.{ toTortoise, toNative }
+  JsonLibrarySJS.{ toTortoise, toNative }
 
 import
   scalaz.Scalaz.ToValidationOps

@@ -8,11 +8,11 @@ import
 import
   TortoiseJson.{ fields, JsArray, JsBool, JsDouble, JsInt, JsNull, JsObject, JsString }
 
-object JsonLibrary {
+object JsonLibrarySJS extends JsonLibrary {
 
-  type Native = JAny
+  override type Native = JAny
 
-  def toNative(tj: TortoiseJson): Native =
+  override def toNative(tj: TortoiseJson): Native =
     tj match {
       // scalastyle:off null
       case JsNull          => null // as of scala.js 0.6.2 JAny.fromUnit(()) is undefined, not null - RG 5/19/15
@@ -25,7 +25,7 @@ object JsonLibrary {
       case JsObject(props) => Dictionary(props.toMap.mapValues(toNative).toSeq: _*)
     }
 
-  def toTortoise(nativeValue: Native): TortoiseJson =
+  override def toTortoise(nativeValue: Native): TortoiseJson =
     (nativeValue, typeOf(nativeValue)) match {
       // scalastyle:off null
       // scala.js represents javascript null as jvm null. RG 22/5/15
@@ -48,7 +48,7 @@ object JsonLibrary {
         JsObject(fields(mappings.toSeq: _*))
     }
 
-  def nativeToString(n: Native): String =
+  override def nativeToString(n: Native): String =
     JSON.stringify(n)
 
 }

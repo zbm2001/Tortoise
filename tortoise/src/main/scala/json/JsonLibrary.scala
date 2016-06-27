@@ -9,11 +9,18 @@ import
 import
   TortoiseJson.{ fields, JsArray, JsBool, JsDouble, JsInt, JsNull, JsObject, JsString }
 
-object JsonLibrary {
+trait JsonLibrary {
+  type Native
+  def toNative(tj: TortoiseJson): Native
+  def toTortoise(n: Native):      TortoiseJson
+  def nativeToString(n: Native):  String
+}
 
-  type Native = JValue
+object JsonLibraryJVM extends JsonLibrary {
 
-  def toNative(tj: TortoiseJson): Native =
+  override type Native = JValue
+
+  override def toNative(tj: TortoiseJson): Native =
     tj match {
       case JsNull          => JNull
       case JsInt(i)        => JInt(i)
@@ -24,7 +31,7 @@ object JsonLibrary {
       case JsObject(props) => JObject(props.map { case (k, v) => JField(k, toNative(v)) }.toList)
     }
 
-  def toTortoise(n: Native): TortoiseJson =
+  override def toTortoise(n: Native): TortoiseJson =
     n match {
       case JNull | JNothing => JsNull
       case JInt(i)          => JsInt(i.toInt)
@@ -37,7 +44,7 @@ object JsonLibrary {
       case JObject(props)   => JsObject(fields(props.map { case JField(k, v) => (k, toTortoise(v)) }: _*))
     }
 
-  def nativeToString(n: Native): String =
+  override def nativeToString(n: Native): String =
     compact(render(n))
 
 }

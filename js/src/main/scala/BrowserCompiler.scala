@@ -7,7 +7,7 @@ import
 
 import
   json.{ Jsonify, JsonLibrary, JsonReader, JsonWritable, JsonWriter, TortoiseJson },
-    JsonLibrary.{ Native => NativeJson, toTortoise },
+    JsonLibrarySJS.{ Native => NativeJson, toNative => jsonToNative, toTortoise },
     JsonWriter.string2TortoiseJs,
     TortoiseJson._
 
@@ -43,7 +43,7 @@ class BrowserCompiler {
           compileExtras(parsedRequest.allCommands, parsedRequest.allReporters))
       } yield compilation
 
-    JsonLibrary.toNative(compilationResult.leftMap(_.map(fail => fail: TortoiseFailure)).toJsonObj)
+    jsonToNative(compilationResult.leftMap(_.map(fail => fail: TortoiseFailure)).toJsonObj)
   }
 
   @JSExport
@@ -53,12 +53,12 @@ class BrowserCompiler {
         commands    <- readArray[String](commandJson, "commands")
         compilation <- compilingModel(_.fromNlogoContents(contents), compileExtras(commands, Seq()))
       } yield compilation
-    JsonLibrary.toNative(compilationResult.toJsonObj)
+    jsonToNative(compilationResult.toJsonObj)
   }
 
   @JSExport
   def fromNlogo(contents: String): NativeJson =
-    JsonLibrary.toNative(compilingModel(_.fromNlogoContents(contents)).toJsonObj)
+    jsonToNative(compilingModel(_.fromNlogoContents(contents)).toJsonObj)
 
   @JSExport
   def exportNlogo(exportRequest: NativeJson): NativeJson = {
@@ -68,7 +68,7 @@ class BrowserCompiler {
         parsedRequest <- ExportRequest.read(tortoiseReq).leftMap(_.map(FailureString))
       } yield ModelReader.formatModel(parsedRequest.toModel, literalParser)
 
-    JsonLibrary.toNative(model.leftMap(_.map(fail => fail: TortoiseFailure)).toJsonObj)
+    jsonToNative(model.leftMap(_.map(fail => fail: TortoiseFailure)).toJsonObj)
   }
 
   private def compilingModel(

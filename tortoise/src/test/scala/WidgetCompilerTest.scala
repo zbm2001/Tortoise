@@ -6,8 +6,8 @@ import
   JavascriptObject.{ ElementValue, JsFunction, JsonValueElement }
 
 import
-  json.{ JsonLibrary, JsonReader, TortoiseJson, WidgetSamples, WidgetToJson },
-    JsonLibrary.{ toNative, nativeToString },
+  json.{ JsonLibraryJVM, JsonReader, TortoiseJson, WidgetSamples, WidgetToJson },
+    JsonLibraryJVM.{ toNative, nativeToString },
     JsonReader._,
     TortoiseJson.{ fields, JsArray, JsBool, JsInt, JsObject, JsString },
     WidgetSamples.{ buttonBadAgent => invalidButtonWidget,

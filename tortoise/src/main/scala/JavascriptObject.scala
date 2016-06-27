@@ -6,8 +6,8 @@ import
   JavascriptObject.{ ElementValue, JavascriptElement, JsFunction, JsonValueElement }
 
 import
-  json.{ JsonLibrary, TortoiseJson },
-    JsonLibrary.{ nativeToString, toNative },
+  json.{ JsonLibraryJVM, TortoiseJson },
+    JsonLibraryJVM.{ nativeToString, toNative },
     TortoiseJson.{ fields, JsObject }
 
 import

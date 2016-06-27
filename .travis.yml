@@ -23,7 +23,7 @@ script:
   - cat /usr/lib/jvm/java-8-oracle/release
   - rm -rf tmp/nightly
   - mkdir -p tmp/nightly
-  - cp .travis.sbt jvm/travis.sbt
+  - cp .travis.sbt tortoise/travis.sbt
   - ./nightly.sh sbt_task tortoiseJS/test:compile
   - ./nightly.sh sbt_test tortoiseJVM fast
   - ./nightly.sh sbt_test tortoiseJVM language

@@ -3,7 +3,7 @@
 package org.nlogo.tortoise.json
 
 import
-  JsonLibrary.{ toTortoise, toNative }
+  JsonLibraryJVM.{ toTortoise, toNative }
 
 import
   org.scalatest.FunSuite
