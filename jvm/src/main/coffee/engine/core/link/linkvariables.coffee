@@ -30,6 +30,8 @@ setBreed = (breed) ->
     else
       breed
 
+  @world.linkManager.errorIfBreedIsIncompatible(trueBreed.name)
+
   if @_breed isnt trueBreed
     trueBreed.add(this)
     @_breed?.remove(this)

@@ -10,9 +10,9 @@ IDManager   = require('./idmanager')
 SortedLinks = require('./sortedlinks')
 stableSort  = require('util/stablesort')
 
-{ contains, filter, map } = require('brazierjs/array')
-{ pipeline }              = require('brazierjs/function')
-{ values }                = require('brazierjs/object')
+{ contains, exists, filter, isEmpty, map } = require('brazierjs/array')
+{ pipeline }                               = require('brazierjs/function')
+{ pairs, values }                          = require('brazierjs/object')
 
 module.exports =
 
@@ -60,6 +60,13 @@ module.exports =
     createUndirectedLinks: (source, others, breedName) ->
       @_createLinksBy((turtle) => @_createLink(false, source, turtle, breedName))(others)
 
+    # String -> Unit
+    errorIfBreedIsIncompatible: (breedName) ->
+      if (breedName is   "LINKS" and @_hasBreededs()) or
+         (breedName isnt "LINKS" and @_hasUnbreededs())
+        throw new Error("You cannot have both breeded and unbreeded links in the same world.")
+      return
+
     # (Number, Number, String) => Agent
     getLink: (fromId, toId, breedName = "LINKS") ->
 
@@ -104,6 +111,9 @@ module.exports =
 
     # (Boolean, Turtle, Turtle, String) => Link
     _createLink: (isDirected, from, to, breedName) ->
+
+      @errorIfBreedIsIncompatible(breedName)
+
       [end1, end2] =
         if from.id < to.id or isDirected
           [from, to]
@@ -127,6 +137,19 @@ module.exports =
       isLink = (other) -> other isnt Nobody
       links  = pipeline(map(mkLink), filter(isLink))(turtles.toArray())
       new LinkSet(links)
+
+    # Unit -> Boolean
+    _hasBreededs: ->
+      allPairs = pairs(@_linksTo).concat(pairs(@_linksFrom))
+      exists(
+        ([key, value]) ->
+          key isnt "LINKS" and exists((x) -> not isEmpty(x))(values(value))
+      )(allPairs)
+
+    # Unit -> Boolean
+    _hasUnbreededs: ->
+      hasUnbreededs = (bin) -> exists((x) -> not isEmpty(x))(values(bin["LINKS"] ? {}))
+      hasUnbreededs(@_linksFrom) or hasUnbreededs(@_linksTo)
 
     # (Number, Number, Boolean, String) => Unit
     _insertIntoSets: (fromID, toID, isDirected, breedName) ->
