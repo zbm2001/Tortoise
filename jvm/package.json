@@ -13,6 +13,7 @@
     "grunt-contrib-coffee":    "1.0.0",
     "grunt-contrib-copy":      "1.0.0",
     "iframe-phone":            "1.2.0",
-    "mori":                    "0.3.2"
+    "mori":                    "0.3.2",
+    "vectorious":              "4.8.1"
   }
 }
