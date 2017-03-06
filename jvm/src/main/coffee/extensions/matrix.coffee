@@ -204,14 +204,6 @@ inverse = (matrix) ->
 transpose = (matrix) ->
   matrix.T
 
-# List[Number] -> Number
-# Euclidean norm
-_euclideanNorm = (v) ->
-  sum = 0
-  for n in v
-    sum += n * n
-  result = Math.sqrt(sum)
-
 # Number -> -1 | 1
 _sgn = (n) ->
   if n >= 0 then 1 else -1
@@ -220,7 +212,7 @@ roundZeros = (n) ->
   epsilon = 1e-13
   if Math.abs(n) < epsilon then 0 else n
 
-pad = (A, n) ->
+padMatrix = (A, n) ->
   I = M.identity(n)
   diff = n - A.shape[0]
   for row, i in toRowList(A)
@@ -228,7 +220,7 @@ pad = (A, n) ->
     setRow(I, diff + i, [zeros..., row...])
   I
 
-qrDecomposition = (A) ->
+QR = (A) ->
   n = A.shape[0]
   I = M.identity(n)
   # Initialize Q = I, R = A
@@ -248,6 +240,7 @@ _qrDecomp = (A, Q, R) ->
 
   # alpha * e1 <- [|x|, 0, ..., 0]
   # To get the same results as numpy, don't flip signs:
+  # alpha = -1 * x.magnitude()
   # alpha = (-1 * _sgn(x.get(0))) * x.magnitude()
   alpha = x.magnitude()
   alphaE1 = new V([alpha, Array(n - 1).fill(0)...])
@@ -269,19 +262,30 @@ _qrDecomp = (A, Q, R) ->
   # Q = H1H2...Hn
   # R = Hn...H2H1A
   # Need to first pad H for multiplication.
-  padH = pad(H, Q.shape[0])
+  padH = padMatrix(H, Q.shape[0])
   Q_ = times(Q, padH)
   R_ = times(padH, R)
 
   # Note that the principal submatrix of padH * R is
   # equivalent to the matrix product H * A.
-  A_ = submatrix(R_, 1, 1, n, n)
+  A_ = submatrix(M.multiply(H, A), 1, 1, n, n)
 
   _qrDecomp(A_, Q_, R_)
 
 
 # realEigenvalues : Matrix -> List[Number]
 # Reports a list containing the real eigenvalues of the matrix.
+realEigenvalues = (A) ->
+  [ Q, R ] = QR(A)
+  Qstar = Q
+
+  for i in [0..50]
+    A_ = times(R, Q)
+    [ Q, R ] = QR(A_)
+    Qstar = times(Qstar, Q)
+
+  # [ Qstar, R ]
+  R.diag()
 
 # imaginaryEigenvalues : Matrix -> List[Number]
 # Reports a list containing the imaginary eigenvalues of the matrix.
@@ -289,6 +293,16 @@ _qrDecomp = (A, Q, R) ->
 # eigenvectors : Matrix -> Matrix
 # Reports a matrix containing the eigenvectors of the matrix.
 # Each eigenvector is a column of the resulting matrix.
+eigenvectors = (A) ->
+  [ Q, R ] = QR(A)
+  Qstar = Q
+
+  for i in [0..50]
+    A_ = times(R, Q)
+    [ Q, R ] = QR(A_)
+    Qstar = times(Qstar, Q)
+
+  Qstar
 
 # Matrix -> Number
 det = (matrix) ->
