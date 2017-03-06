@@ -216,46 +216,6 @@ _euclideanNorm = (v) ->
 _sgn = (n) ->
   if n >= 0 then 1 else -1
 
-# Performs Householder reflections based on the QR
-# decomposition of the matrix A.
-
-# # Matrix -> (Matrix, Matrix)
-# _qrDecomp = (A) ->
-#   # Transpose to access columns more easily
-#   AT = toColumnList(A)
-#   n = AT.length
-#   zeros = Array(n - 1).fill(0)
-#   I = M.identity(n)
-#   vShape = { shape: [n, 1] }
-
-#   # Initialize R to A, and Q to a zero matrix.
-#   R = A
-#   Q = M.zeros(n, n)
-
-#   # Householder transformations
-#   for k in [0...(n - 1)]
-#     # x := kth column of A
-#     x = new V(AT[0])
-#     alpha = -1 * _sgn(x.get(0)) * x.magnitude()
-#     alphaE1 = new V([alpha, zeros...])
-
-#     # Normalize x + alpha * e1
-#     u = V.add(x, alphaE1)
-#     v = u.normalize()
-#     vM = new M(v, vShape)
-
-#     # Compute Q minor matrix
-#     # Q = I - 2vvT
-#     vvT = M.multiply(vM, vM.T).scale(2)
-#     Q = M.subtract(I, vvT)
-
-#     # Compute A'
-#     QA = M.multiply(Q, A)
-#     print(QA)
-#     A_ = submatrix(QA, 1, 1, n, n)
-#     # print(A_)
-#     return A_
-
 roundZeros = (n) ->
   epsilon = 1e-13
   if Math.abs(n) < epsilon then 0 else n
