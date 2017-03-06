@@ -1,7 +1,10 @@
 v = require('vectorious')
 M = v.Matrix
+V = v.Vector
 
 # https://ccl.northwestern.edu/netlogo/docs/matrix.html
+
+print = (m) -> console.log(prettyPrintText(m))  # temp
 
 # (Number, Number, Number) -> Matrix
 makeConstant = (rows, cols, initialValue) ->
@@ -152,7 +155,7 @@ _opReducer = (scalarOp, matrixOp, mixedOp) ->
         else  # Matrix, Matrix
           matrixOp(left, right))
 
-# oh god i give up
+# ((Matrix | Number), (Matrix | Number), (Matrix | Number)*) -> Matrix
 times = (m1, m2, rest...) ->
   matrixMultiplier = _opReducer(
     (s1, s2) -> s1 * s2,
@@ -189,8 +192,8 @@ minus = (m1, m2, rest...) ->
   broadcast = (n) -> M.fill(rows, cols, n)
 
   operands.reduce((left, right) ->
-    leftMatrix = broadcast(left) if typeof left is 'number' else left
-    rightMatrix = broadcast(right) if typeof right is 'number' else right
+    leftMatrix = if typeof left is 'number' then broadcast(left) else left
+    rightMatrix = if typeof right is 'number' then broadcast(right)  else right
     M.subtract(leftMatrix, rightMatrix))
 
 # Matrix -> Matrix
@@ -201,13 +204,129 @@ inverse = (matrix) ->
 transpose = (matrix) ->
   matrix.T
 
+# List[Number] -> Number
+# Euclidean norm
+_euclideanNorm = (v) ->
+  sum = 0
+  for n in v
+    sum += n * n
+  result = Math.sqrt(sum)
+
+# Number -> -1 | 1
+_sgn = (n) ->
+  if n >= 0 then 1 else -1
+
+# Performs Householder reflections based on the QR
+# decomposition of the matrix A.
+
+# # Matrix -> (Matrix, Matrix)
+# _qrDecomp = (A) ->
+#   # Transpose to access columns more easily
+#   AT = toColumnList(A)
+#   n = AT.length
+#   zeros = Array(n - 1).fill(0)
+#   I = M.identity(n)
+#   vShape = { shape: [n, 1] }
+
+#   # Initialize R to A, and Q to a zero matrix.
+#   R = A
+#   Q = M.zeros(n, n)
+
+#   # Householder transformations
+#   for k in [0...(n - 1)]
+#     # x := kth column of A
+#     x = new V(AT[0])
+#     alpha = -1 * _sgn(x.get(0)) * x.magnitude()
+#     alphaE1 = new V([alpha, zeros...])
+
+#     # Normalize x + alpha * e1
+#     u = V.add(x, alphaE1)
+#     v = u.normalize()
+#     vM = new M(v, vShape)
+
+#     # Compute Q minor matrix
+#     # Q = I - 2vvT
+#     vvT = M.multiply(vM, vM.T).scale(2)
+#     Q = M.subtract(I, vvT)
+
+#     # Compute A'
+#     QA = M.multiply(Q, A)
+#     print(QA)
+#     A_ = submatrix(QA, 1, 1, n, n)
+#     # print(A_)
+#     return A_
+
+roundZeros = (n) ->
+  epsilon = 1e-13
+  if Math.abs(n) < epsilon then 0 else n
+
+pad = (A, n) ->
+  I = M.identity(n)
+  diff = n - A.shape[0]
+  for row, i in toRowList(A)
+    zeros = Array(diff).fill(0)
+    setRow(I, diff + i, [zeros..., row...])
+  I
+
+qrDecomposition = (A) ->
+  n = A.shape[0]
+  I = M.identity(n)
+  # Initialize Q = I, R = A
+  [ Q, R ] = _qrDecomp(A, I, A)
+  [ Q.map(roundZeros), R.map(roundZeros) ]
+
+_qrDecomp = (A, Q, R) ->
+  AT = toColumnList(A)
+  n = AT.length
+
+  # Don't compute for 1x1 matrices.
+  if n < 2
+    return [ Q, R ]
+
+  # x <- first column of A
+  x = new V(AT[0])
+
+  # alpha * e1 <- [|x|, 0, ..., 0]
+  # To get the same results as numpy, don't flip signs:
+  # alpha = (-1 * _sgn(x.get(0))) * x.magnitude()
+  alpha = x.magnitude()
+  alphaE1 = new V([alpha, Array(n - 1).fill(0)...])
+
+  # v <- normalize(x + alphaE1)
+  # Need to convert it to a matrix to allow multiplication
+  v = V.add(x, alphaE1).normalize()
+  vM = new M(v, { shape: [n, 1] })
+
+  # Compute Householder matrix H = I - 2vvT.
+  vvT = M.multiply(vM, vM.T)
+  H = M.subtract(M.identity(n), vvT.scale(2))
+
+  # Hx reflects x over the plane given by v,
+  # which reflects x onto the standard basis vector e1,
+  # which zeros all the entries except x[0].
+  # So HA zeros all subdiagonal elements of x.
+
+  # Q = H1H2...Hn
+  # R = Hn...H2H1A
+  # Need to first pad H for multiplication.
+  padH = pad(H, Q.shape[0])
+  Q_ = times(Q, padH)
+  R_ = times(padH, R)
+
+  # Note that the principal submatrix of padH * R is
+  # equivalent to the matrix product H * A.
+  A_ = submatrix(R_, 1, 1, n, n)
+
+  _qrDecomp(A_, Q_, R_)
+
+
 # realEigenvalues : Matrix -> List[Number]
 # Reports a list containing the real eigenvalues of the matrix.
 
 # imaginaryEigenvalues : Matrix -> List[Number]
 # Reports a list containing the imaginary eigenvalues of the matrix.
 
-# eigenVectors : Matrix -> Matrix
+# eigenvectors : Matrix -> Matrix
 # Reports a matrix containing the eigenvectors of the matrix.
 # Each eigenvector is a column of the resulting matrix.
 
@@ -243,3 +362,12 @@ module.exports =
     # ,    "REMOVE": remove
     }
   }
+
+A = new M([[1, 3, 4], [3, 1, 2], [4, 2, 1]])
+B = new M([ [ -1, -1, 1 ], [ 1, 3, 3 ], [ -1, -1, 5 ], [ 1, 3, 7 ] ])
+C = new M([[4, 2, 22, 1], [2, 3, 2, 13], [22, 2, 4, -5], [1, 13, -5, 1]])
+D = new M([[12, -51, 4], [6, 167, -68], [-4, 24, -41]])
+
+# array([[ -14.,  -21.,   14.],
+#        [   0., -175.,   70.],
+#        [   0.,    0.,  -35.]])
