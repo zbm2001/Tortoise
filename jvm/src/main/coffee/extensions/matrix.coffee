@@ -1,10 +1,9 @@
 v = require('vectorious')
 M = v.Matrix
 V = v.Vector
+numeric = require('./numeric.js')
 
 # https://ccl.northwestern.edu/netlogo/docs/matrix.html
-
-print = (m) -> console.log(prettyPrintText(m))  # temp
 
 # (Number, Number, Number) -> Matrix
 makeConstant = (rows, cols, initialValue) ->
@@ -204,105 +203,23 @@ inverse = (matrix) ->
 transpose = (matrix) ->
   matrix.T
 
-# Number -> -1 | 1
-_sgn = (n) ->
-  if n >= 0 then 1 else -1
-
-roundZeros = (n) ->
-  epsilon = 1e-13
-  if Math.abs(n) < epsilon then 0 else n
-
-padMatrix = (A, n) ->
-  I = M.identity(n)
-  diff = n - A.shape[0]
-  for row, i in toRowList(A)
-    zeros = Array(diff).fill(0)
-    setRow(I, diff + i, [zeros..., row...])
-  I
-
-QR = (A) ->
-  n = A.shape[0]
-  I = M.identity(n)
-  # Initialize Q = I, R = A
-  [ Q, R ] = _qrDecomp(A, I, A)
-  [ Q.map(roundZeros), R.map(roundZeros) ]
-
-_qrDecomp = (A, Q, R) ->
-  AT = toColumnList(A)
-  n = AT.length
-
-  # Don't compute for 1x1 matrices.
-  if n < 2
-    return [ Q, R ]
-
-  # x <- first column of A
-  x = new V(AT[0])
-
-  # alpha * e1 <- [|x|, 0, ..., 0]
-  # To get the same results as numpy, don't flip signs:
-  # alpha = -1 * x.magnitude()
-  # alpha = (-1 * _sgn(x.get(0))) * x.magnitude()
-  alpha = x.magnitude()
-  alphaE1 = new V([alpha, Array(n - 1).fill(0)...])
-
-  # v <- normalize(x + alphaE1)
-  # Need to convert it to a matrix to allow multiplication
-  v = V.add(x, alphaE1).normalize()
-  vM = new M(v, { shape: [n, 1] })
-
-  # Compute Householder matrix H = I - 2vvT.
-  vvT = M.multiply(vM, vM.T)
-  H = M.subtract(M.identity(n), vvT.scale(2))
-
-  # Hx reflects x over the plane given by v,
-  # which reflects x onto the standard basis vector e1,
-  # which zeros all the entries except x[0].
-  # So HA zeros all subdiagonal elements of x.
-
-  # Q = H1H2...Hn
-  # R = Hn...H2H1A
-  # Need to first pad H for multiplication.
-  padH = padMatrix(H, Q.shape[0])
-  Q_ = times(Q, padH)
-  R_ = times(padH, R)
-
-  # Note that the principal submatrix of padH * R is
-  # equivalent to the matrix product H * A.
-  A_ = submatrix(M.multiply(H, A), 1, 1, n, n)
-
-  _qrDecomp(A_, Q_, R_)
-
-
 # realEigenvalues : Matrix -> List[Number]
 # Reports a list containing the real eigenvalues of the matrix.
 realEigenvalues = (A) ->
-  [ Q, R ] = QR(A)
-  Qstar = Q
-
-  for i in [0..50]
-    A_ = times(R, Q)
-    [ Q, R ] = QR(A_)
-    Qstar = times(Qstar, Q)
-
-  # [ Qstar, R ]
-  R.diag()
+  { lambda } = numeric.eig(toRowList(A))
+  new M(lambda.x)
 
 # imaginaryEigenvalues : Matrix -> List[Number]
 # Reports a list containing the imaginary eigenvalues of the matrix.
+imaginaryEigenvalues = (A) ->
+  throw new Error('Not implemented')
 
 # eigenvectors : Matrix -> Matrix
 # Reports a matrix containing the eigenvectors of the matrix.
 # Each eigenvector is a column of the resulting matrix.
 eigenvectors = (A) ->
-  [ Q, R ] = QR(A)
-  Qstar = Q
-
-  for i in [0..50]
-    A_ = times(R, Q)
-    [ Q, R ] = QR(A_)
-    Qstar = times(Qstar, Q)
-
-  Qstar
+  { E } = numeric.eig(toRowList(A))
+  new M(E.x)
 
 # Matrix -> Number
 det = (matrix) ->
@@ -324,24 +241,156 @@ trace = (matrix) ->
 solve = (A, C) ->
   A.solve(C)
 
-module.exports =
-  {
-    name: "matrix"
-  , prims: {
-    #   "FROM-LIST": fromList
-    # ,   "TO-LIST": toList
-    # ,   "IS-MAP?": isMap
-    # ,       "ADD": add
-    # ,       "GET": get
-    # ,    "REMOVE": remove
-    }
-  }
+# # List -> (Number Number Number Number)
+# forecastContinuousGrowth = (data) ->
 
-A = new M([[1, 3, 4], [3, 1, 2], [4, 2, 1]])
-B = new M([ [ -1, -1, 1 ], [ 1, 3, 3 ], [ -1, -1, 5 ], [ 1, 3, 7 ] ])
-C = new M([[4, 2, 22, 1], [2, 3, 2, 13], [22, 2, 4, -5], [1, 13, -5, 1]])
-D = new M([[12, -51, 4], [6, 167, -68], [-4, 24, -41]])
+_forecastGrowthHelper = (data) ->
+  indepVar = [0...data.length]
+  dataMatrix = fromColumnList([ data, indepVar ])
+  [ coefficients, stats ] = regress(dataMatrix)
+  [ constant, slope ] = coefficients
+  [ r2 ] = stats
+  [ constant, slope, r2 ]
 
-# array([[ -14.,  -21.,   14.],
-#        [   0., -175.,   70.],
-#        [   0.,    0.,  -35.]])
+forecastLinearGrowth = (data) ->
+  [ constant, slope, r2 ] = _forecastGrowthHelper(data)
+  x = data.length
+  forecast = slope * x + constant
+  [ forecast, constant, slope, r2 ]
+
+forecastCompoundGrowth = (data) ->
+  lnData = data.map(Math.log)
+  [ c, p, r2 ] = _forecastGrowthHelper(lnData)
+  constant = Math.exp(c)
+  proportion = Math.exp(p)
+  x = data.length
+  forecast = constant * proportion ** x
+  [ forecast, constant, proportion, r2 ]
+
+forecastContinuousGrowth = (data) ->
+  lnData = data.map(Math.log)
+  [ c, rate, r2 ] = _forecastGrowthHelper(lnData)
+  constant = Math.exp(c)
+  x = data.length
+  forecast = constant * Math.exp(rate * x)
+  [ forecast, constant, rate, r2 ]
+
+regress = (data) ->
+  # y is a column vector [y1 ... yN].T
+  # denoting the dependent variable observations.
+  y = fromColumnList([ getColumn(data, 0) ])
+
+  # To construct the matrix X, we replace the first
+  # column (the dependent variable) of the input matrix
+  # with all 1's:
+  # [ 1 v1 s1 ]
+  # [ 1 v2 s2 ] ...etc.
+  [ nObservations, nVars ] = data.shape
+  indepVars = submatrix(data, 0, 1, nObservations, nVars)
+  ones = y.map((_) -> 1)
+  X = M.augment(ones, indepVars)
+
+  # Solve the system Xb = y for b, the row vector
+  # of coefficients for each independent variable.
+  # The following form ensures X does not need to
+  # be square:
+  # y.T * X * (X.T * X)^-1
+  coefficients = times(y.T, X, inverse(times(X.T, X)))
+
+  # Compute the total sum of squares for the
+  # coefficients vector.
+  ySum = y.reduce((a, b) -> a + b)
+  yBar = ySum / nObservations
+  yDiff = minus(y, M.fill(nObservations, 1, yBar))
+  totalSumSq = times(yDiff.T, yDiff).get(0, 0)
+
+  # Compute residual sum squares.
+  resid = minus(times(X, coefficients.T), y)
+  residSumSq = times(resid.T, resid).get(0, 0)
+
+  # Compute the R^2 value and return all statistics.
+  rSquared = 1 - (residSumSq / totalSumSq)
+  stats = [ rSquared, totalSumSq, residSumSq ]
+
+  [ getRow(coefficients, 0), stats ]
+
+print = (x) -> console.log(prettyPrintText(x))
+
+
+# Y
+happiness = [2, 4, 5, 8, 10]
+# X
+snackFoodConsumed = [3, 4, 3, 7, 8]
+goalsAccomplished = [2, 3, 5, 8, 9]
+
+console.log('Expected:')
+# Regression constant, coefficients on each independent var
+console.log([[-0.14606741573033788, 0.3033707865168543, 0.8202247191011234],
+# R^2                   Total sum sq        Residual sum sq
+ [0.9801718440185063,   40.8,               0.8089887640449439]])
+console.log('Actual:')
+console.log(regress(fromColumnList([happiness, snackFoodConsumed, goalsAccomplished])))
+
+data = [20, 25, 28, 32, 35, 39]
+
+console.log('Linear growth')
+console.log('Expected:')
+console.log([42.733333333333334, 20.619047619047638, 3.6857142857142824, 0.9953743395474031])
+console.log('Actual:')
+console.log(forecastLinearGrowth(data))
+
+console.log('Compound growth')
+console.log('Expected:')
+console.log([45.60964465307147, 21.15254147944863, 1.136621034423892, 0.9760867518334806])
+console.log('Actual:')
+console.log(forecastCompoundGrowth(data))
+
+console.log('Continuous growth')
+console.log('Expected:')
+console.log([45.60964465307146, 21.15254147944863, 0.12805985615332668, 0.9760867518334806])
+console.log('Actual:')
+console.log(forecastContinuousGrowth(data))
+
+# module.exports = {
+#   name: "matrix",
+#   prims: {
+#     "MAKE-CONSTANT": makeConstant,
+#     "MAKE-IDENTITY": makeIdentity,
+#     "FROM-ROW-LIST": fromRowList,
+#     "FROM-COLUMN-LIST": fromColumnList,
+#     "TO-ROW-LIST": toRowList,
+#     "TO-COLUMN-LIST": toColumnList,
+#     "COPY": copy,
+#     "PRETTY-PRINT-TEXT": prettyPrintText,
+#     "SOLVE": solve,
+#     "GET": get,
+#     "GET-ROW": getRow,
+#     "GET-COLUMN": getColumn,
+#     "SET": set,
+#     "SET-ROW": setRow,
+#     "SET-COLUMN": setColumn,
+#     "SWAP-ROWS": swapRows,
+#     "SWAP-COLUMNS": swapColumns,
+#     "SET-AND-REPORT": setAndReport,
+#     "DIMENSIONS": dimensions,
+#     "SUBMATRIX": submatrix,
+#     "MAP": map,
+#     "TIMES-SCALAR": times,
+#     "TIMES": times,
+#     "*": times,
+#     "TIMES-ELEMENT-WISE": timesElementWise,
+#     "PLUS-SCALAR": plus,
+#     "PLUS": plus,
+#     "+": plus,
+#     "MINUS": minus,
+#     "-": minus,
+#     "INVERSE": inverse,
+#     "TRANSPOSE": transpose,
+#     "REAL-EIGENVALUES": realEigenvalues,
+#     "IMAGINARY-EIGENVALUES": imaginaryEigenvalues,
+#     "EIGENVECTORS": eigenvectors,
+#     "DET": det,
+#     "RANK": rank,
+#     "TRACE": trace,
+#   }
+# }
