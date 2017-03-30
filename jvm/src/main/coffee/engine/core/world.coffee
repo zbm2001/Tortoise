@@ -10,6 +10,7 @@ Ticker          = require('./world/ticker')
 TurtleManager   = require('./world/turtlemanager')
 StrictMath      = require('shim/strictmath')
 NLMath          = require('util/nlmath')
+convertCSV      = require('util/netlogoexporttojson')
 
 { TopologyInterrupt } = require('util/exception')
 
@@ -339,4 +340,49 @@ module.exports =
       if @_patchesAllBlack
         @_patchesAllBlack = false
         @_updater.updated(this)("patchesAllBlack")
+      return
+
+    # (Object) => Unit
+    importWorld: =>
+      @clearAll()
+      worldJSON = convertCSV()
+      @_importRandomState(worldJSON)
+      @_importGlobals(worldJSON)
+      @_importPatches(worldJSON)
+      @_importTurtles(worldJSON)
+      return
+
+    # (Object) => Unit
+    _importRandomState: (worldJSON) =>
+      @rng.importRNGState(worldJSON["RANDOM STATE"])
+      return
+
+    # (Object) => Unit
+    _importGlobals: (worldJSON) =>
+      userGlobals = worldJSON["USER GLOBALS"]
+      for key,value of userGlobals
+        @observer.setGlobal(key, value)
+      builtInGlobals = worldJSON["BUILT-IN GLOBALS"]
+      @observer.importPerspective(builtInGlobals["perspective"], builtInGlobals["subject"])
+      @ticker.reset()
+      @ticker.tickAdvance(builtInGlobals["ticks"])
+      if builtInGlobals["directed-links"] = "DIRECTED"
+        @_setUnbreededLinksDirected()
+      else
+        @_setUnbreededLinksUndirected()
+      return
+
+    # (Object) => Unit
+    _importPatches: (worldJSON) =>
+      builtInGlobals = worldJSON["BUILT-IN GLOBALS"]
+      @resize(builtInGlobals["min-pxcor"],builtInGlobals["max-pxcor"],builtInGlobals["min-pycor"],builtInGlobals["max-pycor"])
+      worldJSON["PATCHES"].forEach((patch) =>
+        currPatch = @patchAtCoords(patch["pxcor"], patch["pycor"])
+        for k,v of patch when k != "pxcor" and k != "pycor"
+            currPatch.setPatchVariable(k, v))
+      return
+
+    # (Object) => Unit
+    _importTurtles: (worldJSON) =>
+      @turtleManager.importTurtles(worldJSON)
       return

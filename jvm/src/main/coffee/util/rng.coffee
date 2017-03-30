@@ -12,10 +12,17 @@ module.exports =
     # type Generator = { nextInt: (Number) => Number, nextLong: (Number) => Number, nextDouble: () => Number, setSeed: (Number) => Unit }
 
     _currentRNG: undefined # Generator
+    _mainRNG: undefined
 
     # () => RNG
     constructor: ->
-      @_currentRNG = Random
+      @_mainRNG = Random
+      @_currentRNG = @_mainRNG
+
+    # (String)  => Unit
+    importRNGState: (state) =>
+      @_mainRNG.load(state)
+      return
 
     # () => Number
     nextGaussian: =>

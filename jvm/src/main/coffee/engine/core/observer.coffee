@@ -11,7 +11,8 @@ Nobody          = require('./nobody')
 NLType          = require('./typechecker')
 VariableManager = require('./structure/variablemanager')
 
-{ difference, forEach } = require('brazierjs/array')
+{ difference, forEach, find } = require('brazierjs/array')
+{ fold }                      = require('brazierjs/maybe')
 
 { ExtraVariableSpec } = require('./structure/variablespec')
 
@@ -54,6 +55,14 @@ module.exports =
     # (String) => Any
     getGlobal: (varName) ->
       @_varManager[varName]
+
+    # (Number, Agent) => Unit
+    importPerspective: (perspective, subject) ->
+      perspectiveMaybe = find((p) -> p.toInt is perspective)([Observe, Ride, Follow, Watch])
+      @_perspective = fold(-> throw new Exception("Invalid Perspective: " + perspective))((a) -> a)(perspectiveMaybe)
+      @_targetAgent = subject
+      @_updatePerspective()
+      return
 
     # () => Unit
     resetPerspective: ->

@@ -19,6 +19,11 @@ module.exports =
     next: ->
       @_count++
 
+    # (Number) => Unit
+    setNextIndex: (nextIndex) ->
+      @_count = nextIndex
+      return
+
     # (() => Any) => Unit
     suspendDuring: (f) ->
       oldCount = @_count

@@ -40,3 +40,26 @@ CodapExtension
   extensions [codap]
   O> codap:init ([[] ->])
   O> codap:call (nlmap:from-list [])
+
+ImportWorld
+  globals [select-computer-strategy?]
+  breed [computers computer]
+  breed [users user]
+  turtles-own [defect-now? partner partner-defected? partner-defected-past?]
+  select-computer-strategy? => 0
+  O> import-world "asdf"
+  random 100 => 98
+  random 100 => 72
+  random 100 => 12
+  random 100 => 19
+  random 100 => 38
+
+  select-computer-strategy? => "true"
+  subject => "nobody"
+  ticks => 56
+  min-pxcor => -17
+  max-pycor => 8
+  [pcolor] of patch 4 8 => 5
+  [color] of turtle 1 => 125
+  [partner] of turtle 0 => "1"
+  (word [breed] of turtle 1) => "users"

@@ -40,7 +40,7 @@ module.exports =
         (index) =>
           color   = ColorModel.nthColor(index)
           heading = (360 * index) / num
-          @_createTurtle(color, heading, 0, 0, @_breedManager.get(breedName))
+          @_createTurtle(@_idManager.next(), color, heading, 0, 0, @_breedManager.get(breedName))
       )(rangeUntil(0)(num))
       new TurtleSet(turtles)
 
@@ -50,7 +50,7 @@ module.exports =
       turtles = map(=>
         color   = ColorModel.randomColor(@_nextInt)
         heading = @_nextInt(360)
-        @_createTurtle(color, heading, xcor, ycor, @_breedManager.get(breedName))
+        @_createTurtle(@_idManager.next(), color, heading, xcor, ycor, @_breedManager.get(breedName))
       )(rangeUntil(0)(num))
       new TurtleSet(turtles)
 
@@ -66,6 +66,18 @@ module.exports =
       else
         Nobody
 
+    # (Object) => Unit
+    importTurtles: (worldJSON) =>
+      worldJSON["TURTLES"].forEach((turtle) =>
+        newTurtle = @_createTurtle(turtle["who"], 0, 0, 0, 0, @_breedManager.turtles())
+        for k,v of turtle when k != "who"
+          if k == "breed"
+            newTurtle.setVariable(k, @_breedManager.get(turtle["breed"].match(/{breed (.*)}/i)[1].toUpperCase()))
+          else
+            newTurtle.setVariable(k,v))
+      @_idManager.setNextIndex(worldJSON["BUILT-IN GLOBALS"]["nextIndex"])
+      return
+
     # () => TurtleSet
     turtles: ->
       new TurtleSet(@_turtles, "turtles")
@@ -80,9 +92,8 @@ module.exports =
       @_idManager.suspendDuring(() => @clearTurtles())
       return
 
-    # (Number, Number, Number, Number, Breed, String, Number, Boolean, Number, String, (Updatable) => PenManager) => Turtle
-    _createTurtle: (color, heading, xcor, ycor, breed, label, lcolor, isHidden, size, shape, genPenManager) =>
-      id     = @_idManager.next()
+    # (Number, Number, Number, Number, Number, Breed, String, Number, Boolean, Number, String, (Updatable) => PenManager) => Turtle
+    _createTurtle: (id, color, heading, xcor, ycor, breed, label, lcolor, isHidden, size, shape, genPenManager) =>
       turtle = new Turtle(@_world, id, @_updater.updated, @_updater.registerPenTrail, @_updater.registerTurtleStamp, @_updater.registerDeadTurtle, @_createTurtle, @_removeTurtle, color, heading, xcor, ycor, breed, label, lcolor, isHidden, size, shape, genPenManager)
       @_updater.updated(turtle)(Builtins.turtleBuiltins...)
       @_turtles.push(turtle)
