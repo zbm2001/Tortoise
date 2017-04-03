@@ -67,12 +67,13 @@ module.exports =
         Nobody
 
     # (Object) => Unit
-    importTurtles: (worldJSON) =>
+    importTurtles: (worldJSON) ->
       worldJSON["TURTLES"].forEach((turtle) =>
         newTurtle = @_createTurtle(turtle["who"], 0, 0, 0, 0, @_breedManager.turtles())
         for k,v of turtle when k != "who"
           if k == "breed"
-            newTurtle.setVariable(k, @_breedManager.get(turtle["breed"].match(/{breed (.*)}/i)[1].toUpperCase()))
+            breedName = if turtle["breed"] == "{all-turtles}" then "TURTLES" else turtle["breed"].match(/{breed (.*)}/i)[1].toUpperCase()
+            newTurtle.setVariable(k, @_breedManager.get(breedName))
           else
             newTurtle.setVariable(k,v))
       @_idManager.setNextIndex(worldJSON["BUILT-IN GLOBALS"]["nextIndex"])

@@ -18,6 +18,7 @@ Prims         = require('./prim/prims')
 SelfPrims     = require('./prim/selfprims')
 RNG           = require('util/rng')
 Timer         = require('util/timer')
+convertCSV      = require('util/netlogoexporttojson')
 
 { Config: ExportConfig,     Prims: ExportPrims }     = require('./prim/exportprims')
 { Config: MouseConfig,      Prims: MousePrims }      = require('./prim/mouseprims')
@@ -64,6 +65,12 @@ module.exports =
     printPrims      = new PrintPrims(printConfig, Dump)
     userDialogPrims = new UserDialogPrims(dialogConfig)
 
+    importWorld     = (importFile) =>
+      worldJSON = convertCSV()
+      world.importWorld(worldJSON)
+      plotManager.importPlots(worldJSON)
+      outputConfig.write(worldJSON["OUTPUT"])
+
     {
       selfManager
       breedManager
@@ -82,4 +89,5 @@ module.exports =
       updater
       userDialogPrims
       world
+      importWorld
     }

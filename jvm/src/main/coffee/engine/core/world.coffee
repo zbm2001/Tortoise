@@ -10,7 +10,6 @@ Ticker          = require('./world/ticker')
 TurtleManager   = require('./world/turtlemanager')
 StrictMath      = require('shim/strictmath')
 NLMath          = require('util/nlmath')
-convertCSV      = require('util/netlogoexporttojson')
 
 { TopologyInterrupt } = require('util/exception')
 
@@ -343,13 +342,13 @@ module.exports =
       return
 
     # (Object) => Unit
-    importWorld: =>
+    importWorld: (worldJSON) =>
       @clearAll()
-      worldJSON = convertCSV()
       @_importRandomState(worldJSON)
       @_importGlobals(worldJSON)
       @_importPatches(worldJSON)
       @_importTurtles(worldJSON)
+      @_importLinks(worldJSON)
       return
 
     # (Object) => Unit
@@ -364,8 +363,7 @@ module.exports =
         @observer.setGlobal(key, value)
       builtInGlobals = worldJSON["BUILT-IN GLOBALS"]
       @observer.importPerspective(builtInGlobals["perspective"], builtInGlobals["subject"])
-      @ticker.reset()
-      @ticker.tickAdvance(builtInGlobals["ticks"])
+      @ticker.importTicks(builtInGlobals["ticks"])
       if builtInGlobals["directed-links"] = "DIRECTED"
         @_setUnbreededLinksDirected()
       else
@@ -385,4 +383,9 @@ module.exports =
     # (Object) => Unit
     _importTurtles: (worldJSON) =>
       @turtleManager.importTurtles(worldJSON)
+      return
+
+    # (Object) => Unit
+    _importLinks: (worldJSON) =>
+      @linkManager.importLinks(worldJSON)
       return

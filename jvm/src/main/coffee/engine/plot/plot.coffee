@@ -51,21 +51,17 @@ module.exports = class Plot
 
   # (String) => Unit
   createTemporaryPen: (name) ->
-    existingPen = @_getPenByName(name)
-    @_currentPen =
-      if existingPen?
-        existingPen
-      else
-        pen = new Pen(name, @_ops.makePenOps, true)
-        @_penMap[pen.name.toUpperCase()] = pen
-        @_ops.registerPen(pen)
-        pen
+    @_currentPen = @_createAndReturnTemporaryPen(name)
     return
 
   # () => Unit
   disableAutoplotting: ->
     @isAutoplotting = false
     return
+
+  # (Number) => DisplayMode
+  displayModeFromNumber: (num) ->
+    @_withPen((pen) => pen.displayModeFromNumber(num))
 
   # (Array[Number]) => Unit
   drawHistogramFrom: (list) ->
@@ -87,6 +83,18 @@ module.exports = class Plot
   # (String) => Boolean
   hasPenWithName: (name) ->
     @_getPenByName(name)?
+
+  # (Object) => Unit
+  importPlot: (plotJSON) ->
+    plotJSON["pens"].forEach((pen) =>
+      newPen = @_createAndReturnTemporaryPen(pen["pen name"])
+      newPen.importPen(pen))
+    @setXRange(plotJSON["x min"], plotJSON["x max"])
+    @setYRange(plotJSON["y min"], plotJSON["y max"])
+    @isAutoplotting = plotJSON["autoplot?"]
+    @setCurrentPen(plotJSON["current pen"])
+    @isLegendEnabled = plotJSON["legend open?"]
+    return
 
   # () => Unit
   lowerPen: ->
@@ -176,19 +184,9 @@ module.exports = class Plot
       pipeline(values, forEach((pen) -> pen.update(); return))(@_penMap)
     return
 
-  # () => Unit
-  useBarPenMode: ->
-    @_withPen((pen) => pen.useBarMode())
-    return
-
-  # () => Unit
-  useLinePenMode: ->
-    @_withPen((pen) => pen.useLineMode())
-    return
-
-  # () => Unit
-  usePointPenMode: ->
-    @_withPen((pen) => pen.usePointMode())
+  # (DisplayMode) => Unit
+  updateDisplayMode: (newMode) ->
+    @_withPen((pen) => pen.updateDisplayMode(newMode))
     return
 
   # (String) => (() => Unit) => Unit
@@ -198,6 +196,17 @@ module.exports = class Plot
     f()
     @_currentPen = oldPen
     return
+
+  # (String) => Pen
+  _createAndReturnTemporaryPen: (name) ->
+    existingPen = @_getPenByName(name)
+    if existingPen?
+      existingPen
+    else
+      pen = new Pen(name, @_ops.makePenOps, true)
+      @_penMap[pen.name.toUpperCase()] = pen
+      @_ops.registerPen(pen)
+      pen
 
   # (String) => Pen
   _getPenByName: (name) ->

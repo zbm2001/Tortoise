@@ -123,6 +123,14 @@ module.exports.Pen = class Pen
 
     return
 
+  # (Number) => DisplayMode
+  displayModeFromNumber: (num) ->
+    switch num
+      when 0 then Line
+      when 1 then Bar
+      when 2 then Point
+      else throw new Error("#{num} is not a valid plot pen mode (valid modes are 0, 1, and 2)")
+
   # () => Number
   getColor: ->
     @_state.color
@@ -138,6 +146,22 @@ module.exports.Pen = class Pen
   # () => Array[PlotPoint]
   getPoints: ->
     @_points
+
+  # (Object) => Unit
+  importPen: (penJSON) ->
+    penJSON["points"].forEach((point) =>
+      mode = if point["pen down?"] then Down else Up
+      @_points.push(new PlotPoint(point["x"], point["y"], mode, point["color"]))
+      @_ops.addPoint(point["x"], point["y"]))
+    xs = @_points.map((p) -> p.x)
+    ys = @_points.map((p) -> p.y)
+    @_bounds = [Math.min(xs...), Math.max(xs...), Math.min(ys...), Math.max(ys...)]
+    if penJSON["pen down?"] then @lower() else @raise()
+    @setColor(penJSON["color"])
+    @setInterval(penJSON["interval"])
+    @_state.leapCounterTo(penJSON["x"])
+    @updateDisplayMode(@displayModeFromNumber(penJSON["mode"]))
+    return
 
   # () => Unit
   lower: ->
@@ -181,27 +205,18 @@ module.exports.Pen = class Pen
     @_updateThis()
     return
 
-  # () => Unit
-  useBarMode: ->
-    @_updateDisplayMode(Bar)
-    return
-
-  # () => Unit
-  useLineMode: ->
-    @_updateDisplayMode(Line)
-    return
-
-  # () => Unit
-  usePointMode: ->
-    @_updateDisplayMode(Point)
+  # (DisplayMode) => Unit
+  updateDisplayMode: (newMode) ->
+    @_state.displayMode = newMode
+    @_ops.updateMode(newMode)
     return
 
   # (Number, Number) => Unit
   _addPoint: (x, y) ->
-    @_points.push(new PlotPoint(x, y, @_state.mode, @_state.color))
-    @_updateBounds(x, y)
-    @_ops.addPoint(x, y)
-    return
+   @_points.push(new PlotPoint(x, y, @_state.mode, @state.color))
+   @_updateBounds(x, y)
+   @_ops.addPoint(x, y)
+   return
 
     # (x, y) => Unit
   _updateBounds: (x, y) ->
@@ -211,8 +226,3 @@ module.exports.Pen = class Pen
         [Math.min(minX, x), Math.max(maxX, x), Math.min(minY, y), Math.max(maxY, y)]
       else
         [x, x, y, y]
-
-  _updateDisplayMode: (newMode) ->
-    @_state.displayMode = newMode
-    @_ops.updateMode(newMode)
-    return

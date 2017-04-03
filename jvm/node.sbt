@@ -35,9 +35,6 @@ grunt := {
     Process("grunt", baseDirectory.value).!(streams.value.log)
   Seq()
 }
-
-grunt := (grunt.dependsOn(yarnInstall)).value
-
 resourceGenerators in Compile += grunt.taskValue
 
 watchSources ++= allJSSources.value

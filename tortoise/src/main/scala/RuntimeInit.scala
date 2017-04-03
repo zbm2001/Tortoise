@@ -39,6 +39,7 @@ class RuntimeInit(program: Program, model: Model, onTickFunction: String = jsFun
     workspaceDeclare("UserDialogPrims"),
     workspaceDeclare("Updater"),
     workspaceDeclare("world"),
+    workspaceDeclare("importWorld"),
 
     JsRequire("Exception",      "util/exception"),
     JsRequire("NLMath",         "util/nlmath"),
