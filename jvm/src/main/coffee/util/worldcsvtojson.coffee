@@ -1,13 +1,23 @@
+{ foldl, tail, zip } = require('brazierjs/array')
+{ pipeline         } = require('brazierjs/function')
+
 parse = require('csv-parse/lib/sync')
 
-parseBool = (x) -> x.toLowerCase() is "true"
+# (String) => Boolean
+parseBool = (x) ->
+  x.toLowerCase() is "true"
 
-identity = (x) -> x
+# Only used to mark things that we should delay converting until later --JAB (4/6/17)
+# [T] @ (T) => T
+identity = (x) ->
+  x
 
+# (Object[String => Any]) => (String) => (String => Any)
 converterFromSchema = (schema) -> (key) ->
-  schema[key] ? identity
+  schema[key]
 
-quotedString = (str) ->
+# (String) => String
+parseString = (str) ->
   match = str.match(/^"(.*)"$/)
   if match?
     match[1]
@@ -16,88 +26,105 @@ quotedString = (str) ->
 
 attributeParser = {
   'PLOTS': {
-    x: parseFloat
-    y: parseFloat
-    color: parseFloat
-    'pen down?': parseBool
-    'x min': parseFloat
-    'x max': parseFloat
-    'y min': parseFloat
-    'y max': parseFloat
-    'autoplot?': parseBool
-    mode: parseInt
-    interval: parseInt
-    'current pen': quotedString
-    'legend open?': parseBool
-    'number of pens': parseInt
-    'pen name': quotedString
+    'autoplot?':      parseBool
+  , color:            parseFloat
+  , 'current pen':    parseString
+  , interval:         parseFloat
+  , 'legend open?':   parseBool
+  , mode:             parseInt
+  , 'number of pens': parseInt
+  , 'pen down?':      parseBool
+  , 'pen name':       parseString
+  , 'x max':          parseFloat
+  , 'x min':          parseFloat
+  , x:                parseFloat
+  , 'y max':          parseFloat
+  , 'y min':          parseFloat
+  , y:                parseFloat
   }
-  'RANDOM STATE': {}
+  'RANDOM STATE': {
+    value: identity
+  }
   'GLOBALS': {
-    'min-pxcor': parseInt
-    'max-pxcor': parseInt
-    'min-pycor': parseInt
-    'max-pycor': parseInt
-    perspective: parseInt
-    nextIndex: parseInt
-    'directed-links': quotedString
-    ticks: parseInt
+    'directed-links': parseString
+    'min-pxcor':      parseInt
+    'max-pxcor':      parseInt
+    'min-pycor':      parseInt
+    'max-pycor':      parseInt
+    nextIndex:        parseInt
+    perspective:      parseInt
+    subject:          identity
+    ticks:            parseFloat
   }
   'TURTLES': {
-    who: parseInt
-    color: parseFloat
-    heading: parseInt
-    xcor: parseInt
-    ycor: parseInt
-    shape: quotedString
-    #label: quotedString Needs Read From String -Daniel Perlovsky 4/3/2017
-    'label-color': parseFloat
-    'hidden?': parseBool
-    size: parseFloat
-    'pen-size': parseFloat
-    'pen-mode': quotedString
+    breed:         identity
+  , color:         parseFloat
+  , heading:       parseFloat
+  , 'hidden?':     parseBool
+  , 'label-color': parseFloat
+  , label:         identity
+  , 'pen-mode':    parseString
+  , 'pen-size':    parseFloat
+  , shape:         parseString
+  , size:          parseFloat
+  , who:           parseInt
+  , xcor:          parseFloat
+  , ycor:          parseFloat
   }
   'PATCHES': {
-    pxcor: parseInt
-    pycor: parseInt
-    pcolor: parseInt
-    #plabel: quotedString Needs read from String -DP 4/3/2017
-    'plabel-color': parseFloat
+    pcolor:         parseFloat
+  , 'plabel-color': parseFloat
+  , plabel:         identity
+  , pxcor:          parseInt
+  , pycor:          parseInt
   }
   'LINKS': {
-    color: parseFloat
-    #label: quotedString Needs read from string -DP 4/3/2017
-    'label-color': parseFloat
-    'hidden?': parseBool
-    thickness: parseFloat
-    shape: quotedString
-    'tie-mode': quotedString
+    breed:         identity
+  , color:         parseFloat
+  , end1:          identity
+  , end2:          identity
+  , 'hidden?':     parseBool
+  , 'label-color': parseFloat
+  , label:         identity
+  , shape:         parseString
+  , thickness:     parseFloat
+  , 'tie-mode':    parseString
   }
   'OUTPUT': {
-    output: quotedString
+    value: parseString
   }
   'EXTENSIONS': {}
 }
 
-builtInGlobals = ['min-pxcor','max-pxcor','min-pycor','max-pycor','perspective','subject','nextIndex','directed-links','ticks']
-
+builtInGlobals = ['min-pxcor', 'max-pxcor', 'min-pycor', 'max-pycor', 'perspective', 'subject', 'nextIndex', 'directed-links', 'ticks']
 
 oneOutput = (csvBucket, schema) ->
-  converter = converterFromSchema(schema)
-  if csvBucket.length == 0 then '' else converter("output")(csvBucket[0][0])
+  converterFromSchema(schema)("value")(csvBucket[0][0])
 
+# (Array[Array[String]], ) => Array[Object[Any]]
 standardParse = (csvBucket, schema) ->
-  output = []
-  converter = converterFromSchema(schema)
-  csvBucket.slice(1).forEach((x) ->
-    obj = {}
-    for j in [0...csvBucket[0].length]
-      obj[csvBucket[0][j]] = converter(csvBucket[0][j])(x[j])
-    output.push(obj))
-  output
 
+  converter = converterFromSchema(schema)
+  [keys, rows...] = csvBucket
+
+  f =
+    (acc, row) ->
+      obj = { extraVars: {} }
+      for key, index in keys
+        value = row[index]
+        if schema[key]?
+          obj[key] = converter(key)(value)
+        else
+          obj.extraVars[key] = identity(value)
+      acc.concat([obj])
+
+  foldl(f)([])(rows)
+
+# (Array[Array[Any]], Object[Any]) => Object[Any]
 globalParse = (csvBucket, schema) ->
-  standardParse(csvBucket, schema)[0]
+  head = standardParse(csvBucket, schema)[0]
+  delete head.extraVars
+  head
 
 plotParse = (csvBucket, schema) ->
   output = {}
@@ -110,7 +137,7 @@ plotParse = (csvBucket, schema) ->
   csvIndex = 1
   while csvIndex < csvBucket.length
     plot = {}
-    plot['name'] = quotedString(csvBucket[csvIndex][0])
+    plot['name'] = parseString(csvBucket[csvIndex][0])
     csvIndex++
 
     #Parsing of the global attributes in each plot
@@ -178,29 +205,36 @@ buckets = {
 }
 
 module.exports = () ->
-  world = {}
-  csv = testCSV
-  f = (parsedCSV) ->
-    dic = {}
-    key = ''
-    parsedCSV.forEach((x) ->
-      if x of buckets
-        key = x
-        dic[key] = []
-      else if key != ''
-          dic[key].push(x))
-    for bucket of buckets
-      world[bucket] = buckets[bucket](dic[bucket], attributeParser[bucket])
-    globals = extractGlobals(world["GLOBALS"])
-    world["USER GLOBALS"] = globals[1]
-    world["BUILT-IN GLOBALS"] = globals[0]
-    delete world["GLOBALS"]
-  parsedCSV = parse(csv, {
+
+  parsedCSV = parse(testCSV, {
     comment: '#'
     skip_empty_lines: true
     relax_column_count: true
   })
-  f(parsedCSV)
+
+  world = {}
+
+  clusterRows = ([acc, latestRows], bucketName) ->
+    if bucketName of buckets
+      rows = []
+      acc[bucketName] = rows
+      [acc, rows]
+    else if latestRows?
+      latestRows.push(bucketName)
+      [acc, latestRows]
+    else
+      [acc, latestRows]
+
+  [bucketToRows, _] = foldl(clusterRows)([{}, undefined])(parsedCSV)
+
+  for key, bucketParser of buckets
+    world[key] = bucketParser(bucketToRows[key], attributeParser[key])
+
+  globals = extractGlobals(world["GLOBALS"])
+  world["USER GLOBALS"] = globals[1]
+  world["BUILT-IN GLOBALS"] = globals[0]
+  delete world["GLOBALS"]
+
   world
 
 testCSV = '''
