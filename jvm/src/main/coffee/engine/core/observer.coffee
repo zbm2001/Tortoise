@@ -59,7 +59,7 @@ module.exports =
     # (Number, Agent) => Unit
     importPerspective: (perspective, subject) ->
       perspectiveMaybe = find((p) -> p.toInt is perspective)([Observe, Ride, Follow, Watch])
-      @_perspective = fold(-> throw new Exception("Invalid Perspective: " + perspective))((a) -> a)(perspectiveMaybe)
+      @_perspective = fold(-> throw new Error("Invalid Perspective: " + perspective))((a) -> a)(perspectiveMaybe)
       @_targetAgent = subject
       @_updatePerspective()
       return
