@@ -148,19 +148,29 @@ module.exports.Pen = class Pen
     @_points
 
   # (Object) => Unit
-  importPen: (penJSON) ->
-    penJSON["points"].forEach((point) =>
-      mode = if point["pen down?"] then Down else Up
-      @_points.push(new PlotPoint(point["x"], point["y"], mode, point["color"]))
-      @_ops.addPoint(point["x"], point["y"]))
+  importPen: ({ color, interval, mode, "pen down?": isPenDown, points, x }) ->
+
+    points.forEach(
+      ({ color: pColor, "pen down?": pIsPenDown, x: pX, y: pY }) =>
+        @_points.push(new PlotPoint(pX, pY, (if pIsPenDown then Down else Up), pColor))
+        @_ops.addPoint(pX, pY)
+        return
+    )
+
     xs = @_points.map((p) -> p.x)
     ys = @_points.map((p) -> p.y)
     @_bounds = [Math.min(xs...), Math.max(xs...), Math.min(ys...), Math.max(ys...)]
-    if penJSON["pen down?"] then @lower() else @raise()
-    @setColor(penJSON["color"])
-    @setInterval(penJSON["interval"])
-    @_state.leapCounterTo(penJSON["x"])
-    @updateDisplayMode(@displayModeFromNumber(penJSON["mode"]))
+
+    if isPenDown
+      @lower()
+    else
+      @raise()
+
+    @setColor(color)
+    @setInterval(interval)
+    @_state.leapCounterTo(x)
+    @updateDisplayMode(@displayModeFromNumber(mode))
+
     return
 
   # () => Unit
