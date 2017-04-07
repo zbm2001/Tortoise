@@ -213,10 +213,10 @@ module.exports.Pen = class Pen
 
   # (Number, Number) => Unit
   _addPoint: (x, y) ->
-   @_points.push(new PlotPoint(x, y, @_state.mode, @state.color))
-   @_updateBounds(x, y)
-   @_ops.addPoint(x, y)
-   return
+    @_points.push(new PlotPoint(x, y, @_state.mode, @_state.color))
+    @_updateBounds(x, y)
+    @_ops.addPoint(x, y)
+    return
 
   # (Number, Number) => Unit
   _updateBounds: (x, y) ->
