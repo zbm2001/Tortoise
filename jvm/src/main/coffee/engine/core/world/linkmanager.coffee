@@ -74,15 +74,15 @@ module.exports =
       @_links.find(findFunc) ? Nobody
 
     # (Object) => Unit
-    importLinks: (worldJSON) ->
-      worldJSON["LINKS"].forEach((link) =>
-        breedName = if link["breed"] == "{all-links}" then "LINKS" else link["breed"].match(/{breed (.*)}/i)[1].toUpperCase()
-        isDirected = @_breedManager.get(breedName).isDirected()
-        end1 = @_world.turtleManager.getTurtle(link["end1"].match(/{[^ ]+ (.*)}/)[1])
-        end2 = @_world.turtleManager.getTurtle(link["end2"].match(/{[^ ]+ (.*)}/)[1])
-        newLink = @_createLink(isDirected, end1, end2, breedName)
-        for k,v of link when (k != "breed" and k != "end1" and k != "end2")
-          newLink.setVariable(k,v))
+    importLinks: (linkState) ->
+      linkState.forEach(
+        (lState) =>
+          { breed, end1, end2 } = lState
+          newLink = @_createLink(breed.isDirected(), end1, end2, breed.name)
+          for key, value of lState when (not (key in ["breed", "end1", "end2", "label", "extraVars"]))
+            newLink.setVariable(key, value)
+          return
+      )
       return
 
     # () => LinkSet

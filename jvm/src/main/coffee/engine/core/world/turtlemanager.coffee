@@ -66,17 +66,20 @@ module.exports =
       else
         Nobody
 
-    # (Object) => Unit
-    importTurtles: (worldJSON) ->
-      worldJSON["TURTLES"].forEach((turtle) =>
-        newTurtle = @_createTurtle(turtle["who"], 0, 0, 0, 0, @_breedManager.turtles())
-        for k,v of turtle when k != "who"
-          if k == "breed"
-            breedName = if turtle["breed"] == "{all-turtles}" then "TURTLES" else turtle["breed"].match(/{breed (.*)}/i)[1].toUpperCase()
-            newTurtle.setVariable(k, @_breedManager.get(breedName))
-          else
-            newTurtle.setVariable(k,v))
-      @_idManager.setNextIndex(worldJSON["BUILT-IN GLOBALS"]["nextIndex"])
+    # (Object, Number) => Unit
+    importTurtles: (turtleState, nextIndex) ->
+      turtleState.forEach(
+        ({ who, color, heading, xcor, ycor, shape, "label-color": labelColor, breed
+         , "hidden?": isHidden, size, "pen-size": penSize, "pen-mode": penMode
+         }) =>
+
+          newTurtle = @_createTurtle(who, color, heading, xcor, ycor, breed, "", labelColor, isHidden, size, shape)
+
+          newTurtle.penManager.setPenMode(penMode)
+          newTurtle.penManager.setSize(penSize)
+
+      )
+      @_idManager.setNextIndex(nextIndex)
       return
 
     # () => TurtleSet

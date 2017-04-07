@@ -341,51 +341,56 @@ module.exports =
         @_updater.updated(this)("patchesAllBlack")
       return
 
-    # (Object) => Unit
-    importWorld: (worldJSON) =>
+    # (Object, (Object[Any]) => Unit, (String) => Agent) => Unit
+    importWorld: (
+      {
+        "BUILT-IN GLOBALS": {
+          "directed-links": directedLinks
+        , "max-pxcor": maxPxcor
+        , "max-pycor": maxPycor
+        , "min-pxcor": minPxcor
+        , "min-pycor": minPycor
+        , nextIndex
+        , perspective
+        , subject
+        , ticks
+        }
+      , LINKS: links
+      , PATCHES: patches
+      , "RANDOM STATE": rngState
+      , TURTLES: turtles
+      , "USER GLOBALS": userGlobals
+      }
+    , reifyLinkEnds, reifySubject) ->
+
       @clearAll()
-      @_importRandomState(worldJSON)
-      @_importGlobals(worldJSON)
-      @_importPatches(worldJSON)
-      @_importTurtles(worldJSON)
-      @_importLinks(worldJSON)
-      return
 
-    # (Object) => Unit
-    _importRandomState: (worldJSON) =>
-      @rng.importRNGState(worldJSON["RANDOM STATE"])
-      return
-
-    # (Object) => Unit
-    _importGlobals: (worldJSON) =>
-      userGlobals = worldJSON["USER GLOBALS"]
-      for key,value of userGlobals
+      @rng.importRNGState(rngState)
+      for key, value of userGlobals
         @observer.setGlobal(key, value)
-      builtInGlobals = worldJSON["BUILT-IN GLOBALS"]
-      @observer.importPerspective(builtInGlobals["perspective"], builtInGlobals["subject"])
-      @ticker.importTicks(builtInGlobals["ticks"])
-      if builtInGlobals["directed-links"] = "DIRECTED"
+      @ticker.importTicks(ticks)
+
+      if directedLinks is "DIRECTED"
         @_setUnbreededLinksDirected()
       else
         @_setUnbreededLinksUndirected()
-      return
 
-    # (Object) => Unit
-    _importPatches: (worldJSON) =>
-      builtInGlobals = worldJSON["BUILT-IN GLOBALS"]
-      @resize(builtInGlobals["min-pxcor"],builtInGlobals["max-pxcor"],builtInGlobals["min-pycor"],builtInGlobals["max-pycor"])
-      worldJSON["PATCHES"].forEach((patch) =>
-        currPatch = @patchAtCoords(patch["pxcor"], patch["pycor"])
-        for k,v of patch when k != "pxcor" and k != "pycor"
-            currPatch.setPatchVariable(k, v))
-      return
+      @_resizeHelper(minPxcor, maxPxcor, minPycor, maxPycor, @topology._wrapInX, @topology._wrapInY)
+      patches.forEach(
+        (patchState) =>
+          patch = @patchAtCoords(patchState.pxcor, patchState.pycor)
+          for k, v of patchState when k isnt "pxcor" and k isnt "pycor"
+            patch.setPatchVariable(k, v)
+          return
+      )
 
-    # (Object) => Unit
-    _importTurtles: (worldJSON) =>
-      @turtleManager.importTurtles(worldJSON)
-      return
+      @turtleManager.importTurtles(turtles, nextIndex)
 
-    # (Object) => Unit
-    _importLinks: (worldJSON) =>
-      @linkManager.importLinks(worldJSON)
+      reifyLinkEnds(links)
+      @linkManager.importLinks(links)
+
+      trueSubject = reifySubject(subject)
+      if trueSubject isnt Nobody
+        @observer.importPerspective(perspective, trueSubject)
+
       return
