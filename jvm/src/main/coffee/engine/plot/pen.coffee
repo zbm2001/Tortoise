@@ -218,7 +218,7 @@ module.exports.Pen = class Pen
    @_ops.addPoint(x, y)
    return
 
-    # (x, y) => Unit
+  # (Number, Number) => Unit
   _updateBounds: (x, y) ->
     @_bounds =
       if @_bounds?
@@ -226,3 +226,4 @@ module.exports.Pen = class Pen
         [Math.min(minX, x), Math.max(maxX, x), Math.min(minY, y), Math.max(maxY, y)]
       else
         [x, x, y, y]
+    return
