@@ -4,116 +4,28 @@ class WorldConfig
   # Unit -> Unit
   constructor: (@resizeWorld = (->)) ->
 
-Dump          = require('./dump')
-Hasher        = require('./hasher')
-Updater       = require('./updater')
-BreedManager  = require('./core/breedmanager')
-Nobody        = require('./core/nobody')
-World         = require('./core/world')
-SelfManager   = require('./core/structure/selfmanager')
-PlotManager   = require('./plot/plotmanager')
-LayoutManager = require('./prim/layoutmanager')
-LinkPrims     = require('./prim/linkprims')
-ListPrims     = require('./prim/listprims')
-Prims         = require('./prim/prims')
-SelfPrims     = require('./prim/selfprims')
-convertCSV    = require('util/worldcsvtojson')
-RNG           = require('util/rng')
-Timer         = require('util/timer')
+Dump             = require('./dump')
+Hasher           = require('./hasher')
+readNetLogoValue = require('./readnetlogovalue')
+Updater          = require('./updater')
+BreedManager     = require('./core/breedmanager')
+World            = require('./core/world')
+SelfManager      = require('./core/structure/selfmanager')
+PlotManager      = require('./plot/plotmanager')
+LayoutManager    = require('./prim/layoutmanager')
+LinkPrims        = require('./prim/linkprims')
+ListPrims        = require('./prim/listprims')
+Prims            = require('./prim/prims')
+SelfPrims        = require('./prim/selfprims')
+convertCSV       = require('util/worldcsvtojson')
+RNG              = require('util/rng')
+Timer            = require('util/timer')
 
 { Config: ExportConfig,     Prims: ExportPrims }     = require('./prim/exportprims')
 { Config: MouseConfig,      Prims: MousePrims }      = require('./prim/mouseprims')
 { Config: OutputConfig,     Prims: OutputPrims }     = require('./prim/outputprims')
 { Config: PrintConfig,      Prims: PrintPrims }      = require('./prim/printprims')
 { Config: UserDialogConfig, Prims: UserDialogPrims } = require('./prim/userdialogprims')
-
-
-# Should be replaced with `read-from-string` when we have it. --JAB (4/6/17)
-#
-# ((String, Number) => Turtle, (Number, Number) => Patch, (Number, Number, String) => Link, (String) => Breed, (String) => Breed) => (String) => (() => Any)
-readNetLogoValue = (getTurtle, getPatchAt, getLink, getBreed, getBreedSingular) -> (x) ->
-
-  lowerCased = x.toLowerCase()
-
-  pass = (x) -> { value: x, success: true  }
-  fail =        {           success: false }
-
-  result =
-    switch lowerCased
-      when "e"         then pass(Math.E)
-      when "pi"        then pass(Math.PI)
-      when "true"      then pass(true)
-      when "false"     then pass(false)
-      when "nobody"    then pass(Nobody)
-      when "black"     then pass(  0)
-      when "gray"      then pass(  5)
-      when "white"     then pass(9.9)
-      when "red"       then pass( 15)
-      when "orange"    then pass( 25)
-      when "brown"     then pass( 35)
-      when "yellow"    then pass( 45)
-      when "green"     then pass( 55)
-      when "lime"      then pass( 65)
-      when "turquoise" then pass( 75)
-      when "cyan"      then pass( 85)
-      when "sky"       then pass( 95)
-      when "blue"      then pass(105)
-      when "violet"    then pass(115)
-      when "magenta"   then pass(125)
-      when "pink"      then pass(135)
-      else fail
-
-  if result is fail
-    evalWrapper =
-      try pass(eval(x))
-      catch ex
-        fail
-    if evalWrapper isnt fail
-      evalled = evalWrapper.value
-      if typeof(evalled) is "number" or typeof(evalled) is "string"
-        evalled
-      else
-        throw new Error("Successfully used `eval` on #{x} to make #{evalled}, but I don't know what that is.")
-    else # Not string, not number
-      listMatch = x.match(/^\[.*\]$/)
-      if listMatch?
-        throw new Error("You supplied the list or lambda #{x}, and there's no chance that I'm parsing that!")
-      else # Not a list
-
-        breedNameWrapper =
-          switch x
-            when "{all-turtles}" then pass("TURTLES")
-            when "{all-patches}" then pass("PATCHES")
-            when "{all-links}"   then pass("LINKS")
-            else
-              breedMatches = lowerCased.match(/{breed (.*)}/)
-              if breedMatches?
-                pass(breedMatches[1].toUpperCase())
-              else
-                fail
-
-        if breedNameWrapper isnt fail
-          getBreed(breedNameWrapper.value)
-        else # Not a breed set
-          patchMatch = lowerCased.match(/{patch (\d+) (\d+)}/)
-          if patchMatch?
-            [_, xStr, yStr] = patchMatch
-            getPatchAt(parseInt(xStr), parseInt(yStr))
-          else # Not a patch
-            linkMatch = lowerCased.match(/{([^ ]+) (\d+) (\d+)}/)
-            if linkMatch?
-              [_, breedName, end1IDStr, end2IDStr] = linkMatch
-              getLink(parseInt(end1IDStr), parseInt(end2IDStr), getBreedSingular(breedName).name)
-            else # Not a link
-              turtleMatch = lowerCased.match(/{([^ ]+) (\d+)}/)
-              if turtleMatch?
-                [_, breedName, idStr] = turtleMatch
-                getTurtle(getBreedSingular(breedName).name, parseInt(idStr))
-              else # Not a turtle
-                throw new Error("You supplied #{x}, and I don't know what the heck that is!")
-
-  else
-    result.value
 
 class MiniWorkspace
   # (SelfManager, Updater, BreedManager, RNG, PlotManager) => MiniWorkspace
