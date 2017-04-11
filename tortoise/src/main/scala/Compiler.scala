@@ -70,7 +70,7 @@ object Compiler extends CompilerLike {
     val interfaceInit = JsStatement("interfaceInit", interfaceGlobalJs, Seq("world", "procedures", "modelConfig"))
     TortoiseLoader.integrateSymbols(init ++ plotConfig ++ procedures
                                          :+ outputConfig :+ dialogConfig
-                                         :+ worldConfig :+ interfaceInit)
+                                         :+ fileReaderConfig :+ worldConfig :+ interfaceInit)
   }
 
   def compileReporter(logo:          String,
@@ -181,6 +181,20 @@ object Compiler extends CompilerLike {
                             "notify"  -> jsFunction(Seq("str")),
                             "yesOrNo" -> jsFunction(Seq("str"), "return true;")))
 
+  private def fileReaderConfig: JsStatement =
+    genConfig("fileReader",
+      Map("read" -> jsFunction(
+                      Seq("filepath"),
+                      """var Paths = Java.type('java.nio.file.Paths');
+                        |var Files = Java.type('java.nio.file.Files');
+                        |var UTF8  = Java.type('java.nio.charset.StandardCharsets').UTF_8;
+                        |var lines = Files.readAllLines(Paths.get(filepath), UTF8);
+                        |var out = [];
+                        |lines.forEach(function(line) { out.push(line); });
+                        |return out.join("\n");""".stripMargin
+                    )
+      )
+    )
 
   private def worldConfig: JsStatement =
     genConfig("world", Map("resizeWorld" -> jsFunction(Seq("agent"))))

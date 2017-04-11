@@ -1,8 +1,12 @@
 # (C) Uri Wilensky. https://github.com/NetLogo/Tortoise
 
 class WorldConfig
-  # Unit -> Unit
+  # (() => Unit) => WorldConfig
   constructor: (@resizeWorld = (->)) ->
+
+class FileReaderConfig
+  # ((String) => String) => FileReaderConfig
+  constructor: (@read = (->)) ->
 
 Dump             = require('./dump')
 Hasher           = require('./hasher')
@@ -36,13 +40,14 @@ module.exports =
 
     worldArgs = arguments # If you want `Workspace` to take more parameters--parameters not related to `World`--just keep returning new functions
 
-    dialogConfig  = modelConfig?.dialog    ? new UserDialogConfig
-    exportConfig  = modelConfig?.exporting ? new ExportConfig
-    mouseConfig   = modelConfig?.mouse     ? new MouseConfig
-    outputConfig  = modelConfig?.output    ? new OutputConfig
-    plots         = modelConfig?.plots     ? []
-    printConfig   = modelConfig?.print     ? new PrintConfig
-    worldConfig   = modelConfig?.world     ? new WorldConfig
+    dialogConfig  = modelConfig?.dialog     ? new UserDialogConfig
+    exportConfig  = modelConfig?.exporting  ? new ExportConfig
+    fileReader    = modelConfig?.fileReader ? new FileReaderConfig
+    mouseConfig   = modelConfig?.mouse      ? new MouseConfig
+    outputConfig  = modelConfig?.output     ? new OutputConfig
+    plots         = modelConfig?.plots      ? []
+    printConfig   = modelConfig?.print      ? new PrintConfig
+    worldConfig   = modelConfig?.world      ? new WorldConfig
 
     rng         = new RNG
 
@@ -80,9 +85,10 @@ module.exports =
     # label, and vice versa.  If we try to reify the values up front, we'll fail to retrieve both turtles, since no turtles have actually
     # been imported into the world yet.  If we try to reify them when we create the turtles, we'll run into a problem where the first one
     # instantiated won't have its label's turtle instantiated yet.  So we need to run this after the rest of the world has been set up. --JAB (4/6/17)
-    importWorld = (importFile) =>
+    importWorld = (filepath) =>
 
-      worldState = convertCSV()
+      csvText    = fileReader.read(filepath)
+      worldState = convertCSV(csvText)
       { globals, links, patches, plots, output, turtles } = worldState
 
       # We can safely do breeds beforehand, but not labels or variables or link ends --JAB (4/6/17)
