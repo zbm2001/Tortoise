@@ -68,7 +68,6 @@ nameToSchema = {
   , isLegendOpen: parseBool
   , isPenDown:    parseBool
   , mode:         parseInt
-  , numberOfPens: parseInt
   , penName:      parseString
   , xMax:         parseFloat
   , xMin:         parseFloat
@@ -175,43 +174,47 @@ plotParse = (csvBucket, schema) ->
   csvIndex = 1
 
   while csvIndex < csvBucket.length
-    plot = { name: parseString(csvBucket[csvIndex++][0]) }
 
-    #Parsing of the global attributes in each plot
+    plot     = { name: parseString(csvBucket[csvIndex++][0]) }
+    penCount = undefined
+
+    # Parsing of the global attributes in each plot
     for plotAttributeIndex in [0...csvBucket[csvIndex].length]
-      columnName       = csvNameToSaneName(csvBucket[csvIndex    ][plotAttributeIndex])
-      value            =                   csvBucket[csvIndex + 1][plotAttributeIndex]
-      plot[columnName] = schema[columnName](value)
+      columnName = csvNameToSaneName(csvBucket[csvIndex    ][plotAttributeIndex])
+      value      =                   csvBucket[csvIndex + 1][plotAttributeIndex]
+      if columnName is "numberOfPens"
+        penCount = parseInt(value)
+      else
+        plot[columnName] = schema[columnName](value)
     csvIndex += 2
 
-    #Parsing of the attributes of each pen in a plot
-    plot['pens'] = []
-    numPens = parseInt(plot['number of pens'])
-    for penIndex in [0...numPens]
+    # Parsing of the attributes of each pen in a plot
+    plot.pens = []
+    for penIndex in [0...penCount]
       pen = {}
       for penAttributeIndex in [0...csvBucket[csvIndex].length]
-        columnName       = csvNameToSaneName(csvBucket[csvIndex    ][penAttributeIndex])
-        value            =                   csvBucket[csvIndex + 1][penAttributeIndex]
-        pen[columnName] = schema[columName](value)
-      pen['points'] = []
-      plot['pens'].push(pen)
-    csvIndex += 2 + numPens
+        columnName      = csvNameToSaneName(csvBucket[csvIndex    ][penAttributeIndex])
+        value           =                   csvBucket[csvIndex + 1][penAttributeIndex]
+        pen[columnName] = schema[columnName](value)
+      pen.points = []
+      plot.pens.push(pen)
+    csvIndex += 2 + penCount
 
-    #For each pen, parsing of the list of points associated with the pen
+    # For each pen, parsing of the list of points associated with the pen
     pointsIndex = 1
-    while csvIndex + pointsIndex < csvBucket.length and csvBucket[csvIndex + pointsIndex].length != 1
-      for penIndex in [0...numPens]
+    while csvIndex + pointsIndex < csvBucket.length and csvBucket[csvIndex + pointsIndex].length isnt 1
+      for penIndex in [0...penCount]
         point = {}
-        length = csvBucket[csvIndex].length / numPens
+        length = csvBucket[csvIndex].length / penCount
         for pointAttributeIndex in [0...length]
           columnName        = csvNameToSaneName(csvBucket[csvIndex              ][pointAttributeIndex])
           value             =                   csvBucket[csvIndex + pointsIndex][pointAttributeIndex + penIndex * length]
           point[columnName] = schema[columnName](value)
-        plot['pens'][penIndex]['points'].push(point)
+        plot.pens[penIndex].points.push(point)
       pointsIndex++
     csvIndex += pointsIndex
 
-    output['plots'].push(plot)
+    output.plots.push(plot)
   output
 
 # Parser[ImpObj]
