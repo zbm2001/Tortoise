@@ -84,7 +84,7 @@ module.exports = class Plot
   hasPenWithName: (name) ->
     @_getPenByName(name)?
 
-  # (Object) => Unit
+  # (Object[Any]) => Unit
   importState: ({ currentPen, isAutoplot, isLegendOpen, pens, xMax, xMin, yMax, yMin }) ->
     pens.forEach((pen) => @_createAndReturnTemporaryPen(pen.penName).importState(pen))
     @isAutoplotting  = isAutoplot

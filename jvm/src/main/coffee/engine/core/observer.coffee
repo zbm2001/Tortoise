@@ -57,10 +57,10 @@ module.exports =
       @_varManager[varName]
 
     # (Number, Agent) => Unit
-    importPerspective: (perspective, subject) ->
+    importState: (perspective, subject) ->
       perspectiveMaybe = find((p) -> p.toInt is perspective)([Observe, Ride, Follow, Watch])
-      @_perspective = fold(-> throw new Error("Invalid Perspective: " + perspective))((a) -> a)(perspectiveMaybe)
-      @_targetAgent = subject
+      @_perspective    = fold(-> throw new Error("Invalid perspective: #{perspective}"))((a) -> a)(perspectiveMaybe)
+      @_targetAgent    = subject
       @_updatePerspective()
       return
 

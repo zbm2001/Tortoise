@@ -137,13 +137,11 @@ nameToSchema = {
 # START PARSER STUFF
 
 # Parser[String]
-singletonParse = (csvBucket, schema) ->
-  schema.value(csvBucket[0][0])
+singletonParse = ([[item]], schema) ->
+  schema.value(item)
 
 # Parser[ImpArr]
-arrayParse = (csvBucket, schema) ->
-
-  [keys, rows...] = csvBucket
+arrayParse = ([keys, rows...], schema) ->
 
   f =
     (acc, row) ->
@@ -220,14 +218,13 @@ plotParse = (csvBucket, schema) ->
 # Parser[ImpObj]
 extensionParse = (csvBucket, schema) ->
   output = {}
-  extension = ''
-  for entry in csvBucket
-    item = entry[0]
+  for [item] in csvBucket
     if not item.startsWith('{{')
-      extension = item
-      output[extension] = []
+      output[item] = []
     else
-      output[extension].push(item)
+      extNames  = Object.keys(output)
+      latestExt = output[extNames[extNames.length - 1]]
+      latestExt.push(item)
   output
 
 # Object[Parser[Any]]

@@ -365,7 +365,7 @@ module.exports =
 
       @clearAll()
 
-      @rng.importRNGState(rngState)
+      @rng.importState(rngState)
 
       for key, value of userGlobals
         @observer.setGlobal(key, value)
@@ -385,13 +385,13 @@ module.exports =
           return
       )
 
-      @turtleManager.importTurtles(turtles, nextIndex)
+      @turtleManager.importState(turtles, nextIndex)
 
       reifyLinkEnds(links)
-      @linkManager.importLinks(links)
+      @linkManager.importState(links)
 
       trueSubject = reifySubject(subject)
       if trueSubject isnt Nobody
-        @observer.importPerspective(perspective, trueSubject)
+        @observer.importState(perspective, trueSubject)
 
       return

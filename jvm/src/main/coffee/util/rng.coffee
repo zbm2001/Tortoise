@@ -19,8 +19,8 @@ module.exports =
       @_mainRNG = Random
       @_currentRNG = @_mainRNG
 
-    # (String)  => Unit
-    importRNGState: (state) =>
+    # (String) => Unit
+    importState: (state) ->
       @_mainRNG.load(state)
       return
 

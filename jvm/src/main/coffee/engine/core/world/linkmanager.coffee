@@ -73,14 +73,17 @@ module.exports =
 
       @_links.find(findFunc) ? Nobody
 
-    # (Object) => Unit
-    importLinks: (linkState) ->
+    # (Object[Any]) => Unit
+    importState: (linkState) ->
       linkState.forEach(
-        (lState) =>
-          { breed, end1, end2 } = lState
+        ({ breed, end1, end2, color, isHidden, labelColor, shape, thickness, tieMode }) =>
           newLink = @_createLink(breed.isDirected(), end1, end2, breed.name)
-          for key, value of lState when (not (key in ["breed", "end1", "end2", "label", "extraVars"]))
-            newLink.setVariable(key, value)
+          newLink.setVariable(      'color', color)
+          newLink.setVariable(    'hidden?', isHidden)
+          newLink.setVariable('label-color', labelColor)
+          newLink.setVariable(      'shape', shape)
+          newLink.setVariable(  'thickness', thickness)
+          newLink.setVariable(   'tie-mode', tieMode)
           return
       )
       return

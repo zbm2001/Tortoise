@@ -25,6 +25,10 @@ convertCSV       = require('util/worldcsvtojson')
 RNG              = require('util/rng')
 Timer            = require('util/timer')
 
+{ concat, forEach } = require('brazierjs/array')
+{ pipeline        } = require('brazierjs/function')
+{ pairs           } = require('brazierjs/object')
+
 { Config: ExportConfig,     Prims: ExportPrims }     = require('./prim/exportprims')
 { Config: MouseConfig,      Prims: MousePrims }      = require('./prim/mouseprims')
 { Config: OutputConfig,     Prims: OutputPrims }     = require('./prim/outputprims')
@@ -85,7 +89,7 @@ module.exports =
     # label, and vice versa.  If we try to reify the values up front, we'll fail to retrieve both turtles, since no turtles have actually
     # been imported into the world yet.  If we try to reify them when we create the turtles, we'll run into a problem where the first one
     # instantiated won't have its label's turtle instantiated yet.  So we need to run this after the rest of the world has been set up. --JAB (4/6/17)
-    importWorld = (filepath) =>
+    importWorld = (filepath) ->
 
       csvText    = fileReader.read(filepath)
       worldState = convertCSV(csvText)
@@ -106,23 +110,15 @@ module.exports =
 
       world.importState(worldState, reifyLinkEnds, readFromString)
 
-      for turtle in turtles
-        trueTurtle = world.turtleManager.getTurtle(turtle.who)
-        pairs      = Object.keys(turtle.extraVars).map((k) -> [k, turtle.extraVars[k]])
-        mappings   = pairs.concat([['label', turtle.label]])
-        mappings.forEach(([key, value]) -> trueTurtle.setVariable(key, readFromString(value)))
+      finishImportFor = (agents, lookup, genExtras) ->
+        for agent in agents
+          trueAgent = lookup(agent)
+          pipeline(pairs, concat(genExtras(agent)), forEach(([key, value]) -> trueAgent.setVariable(key, readFromString(value))))(agent.extraVars)
+        return
 
-      for patch in patches
-        truePatch = world.getPatchAt(patch.pxcor, patch.pycor)
-        pairs     = Object.keys(patch.extraVars).map((k) -> [k, patch.extraVars[k]])
-        mappings  = pairs.concat([['plabel', patch.plabel]])
-        mappings.forEach(([key, value]) -> truePatch.setVariable(key, readFromString(value)))
-
-      for link in links
-        trueLink = world.linkManager.getLink(link.end1.id, link.end2.id, link.breed.name)
-        pairs    = Object.keys(link.extraVars).map((k) -> [k, link.extraVars[k]])
-        mappings = pairs.concat([['label', link.label]])
-        mappings.forEach(([key, value]) -> trueLink.setVariable(key, readFromString(value)))
+      finishImportFor(turtles, (({ who               }) -> world.turtleManager.getTurtle(who)                     ), (({  label }) -> [[ 'label',  label]]))
+      finishImportFor(patches, (({ pxcor, pycor      }) -> world.getPatchAt(pxcor, pycor)                         ), (({ plabel }) -> [['plabel', plabel]]))
+      finishImportFor(  links, (({ end1, end2, breed }) -> world.linkManager.getLink(end1.id, end2.id, breed.name)), (({  label }) -> [[ 'label',  label]]))
 
       plotManager.importState(plots)
       outputConfig.write(output)

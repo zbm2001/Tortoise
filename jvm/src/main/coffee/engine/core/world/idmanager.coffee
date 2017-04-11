@@ -20,8 +20,8 @@ module.exports =
       @_count++
 
     # (Number) => Unit
-    setNextIndex: (nextIndex) ->
-      @_count = nextIndex
+    importState: (nextID) ->
+      @_count = nextID
       return
 
     # (() => Any) => Unit
