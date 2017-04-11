@@ -3,6 +3,44 @@
 
 parse = require('csv-parse/lib/sync')
 
+# type ImpObj    = Object[Any]
+# type ImpArr    = Array[ImpObj]
+# type Converter = (String) => Any
+# type Row       = Array[String]
+# type Parser[T] = (Array[Row], Schema) => T
+# type Schema    = Object[Converter]
+
+class WorldState
+  #            (ImpObj         , Object[String], String   , ImpArr  , ImpArr  , ImpArr, String , ImpArr, ImpObj     )
+  constructor: (@builtInGlobals, @userGlobals  , @rngState, @turtles, @patches, @links, @output, @plots, @extensions) ->
+
+# (String) => String
+csvNameToSaneName = (csvName) ->
+
+  replaceAll = (str, regex, f) ->
+    match = str.match(regex)
+    if match?
+      { 0: fullMatch, 1: group, index } = match
+      prefix  = str.slice(0, index)
+      postfix = str.slice(index + fullMatch.length)
+      replaceAll("#{prefix}#{f(group)}#{postfix}", regex, f)
+    else
+      str
+
+  lowered    = csvName.toLowerCase()
+  camelCased = replaceAll(lowered, /[ \-]+([a-z])/, (str) -> str.toUpperCase())
+
+  qMatch = camelCased.match(/^(\w)(.*)\?$/, )
+  if qMatch?
+    { 1: firstLetter, 2: remainder } = qMatch
+    "is#{firstLetter.toUpperCase()}#{remainder}"
+  else
+    camelCased
+
+
+
+# START SCHEMA STUFF
+
 # (String) => Boolean
 parseBool = (x) ->
   x.toLowerCase() is "true"
@@ -12,10 +50,6 @@ parseBool = (x) ->
 identity = (x) ->
   x
 
-# (Object[String => Any]) => (String) => (String => Any)
-converterFromSchema = (schema) -> (key) ->
-  schema[key]
-
 # (String) => String
 parseString = (str) ->
   match = str.match(/^"(.*)"$/)
@@ -24,125 +58,130 @@ parseString = (str) ->
   else
     throw new Error("Failed to match on #{str}")
 
-attributeParser = {
-  'PLOTS': {
-    'autoplot?':      parseBool
-  , color:            parseFloat
-  , 'current pen':    parseString
-  , interval:         parseFloat
-  , 'legend open?':   parseBool
-  , mode:             parseInt
-  , 'number of pens': parseInt
-  , 'pen down?':      parseBool
-  , 'pen name':       parseString
-  , 'x max':          parseFloat
-  , 'x min':          parseFloat
-  , x:                parseFloat
-  , 'y max':          parseFloat
-  , 'y min':          parseFloat
-  , y:                parseFloat
+# Object[Schema]
+nameToSchema = {
+  plots: {
+    color:        parseFloat
+  , currentPen:   parseString
+  , interval:     parseFloat
+  , isAutoplot:   parseBool
+  , isLegendOpen: parseBool
+  , isPenDown:    parseBool
+  , mode:         parseInt
+  , numberOfPens: parseInt
+  , penName:      parseString
+  , xMax:         parseFloat
+  , xMin:         parseFloat
+  , x:            parseFloat
+  , yMax:         parseFloat
+  , yMin:         parseFloat
+  , y:            parseFloat
   }
-  'RANDOM STATE': {
+  randomState: {
     value: identity
   }
-  'GLOBALS': {
-    'directed-links': parseString
-    'min-pxcor':      parseInt
-    'max-pxcor':      parseInt
-    'min-pycor':      parseInt
-    'max-pycor':      parseInt
-    nextIndex:        parseInt
-    perspective:      parseInt
-    subject:          identity
-    ticks:            parseFloat
+  globals: {
+    directedLinks: parseString
+  , minPxcor:      parseInt
+  , maxPxcor:      parseInt
+  , minPycor:      parseInt
+  , maxPycor:      parseInt
+  , nextIndex:     parseInt
+  , perspective:   parseInt
+  , subject:       identity
+  , ticks:         parseFloat
   }
-  'TURTLES': {
-    breed:         identity
-  , color:         parseFloat
-  , heading:       parseFloat
-  , 'hidden?':     parseBool
-  , 'label-color': parseFloat
-  , label:         identity
-  , 'pen-mode':    parseString
-  , 'pen-size':    parseFloat
-  , shape:         parseString
-  , size:          parseFloat
-  , who:           parseInt
-  , xcor:          parseFloat
-  , ycor:          parseFloat
+  turtles: {
+    breed:      identity
+  , color:      parseFloat
+  , heading:    parseFloat
+  , isHidden:   parseBool
+  , labelColor: parseFloat
+  , label:      identity
+  , penMode:    parseString
+  , penSize:    parseFloat
+  , shape:      parseString
+  , size:       parseFloat
+  , who:        parseInt
+  , xcor:       parseFloat
+  , ycor:       parseFloat
   }
-  'PATCHES': {
-    pcolor:         parseFloat
-  , 'plabel-color': parseFloat
-  , plabel:         identity
-  , pxcor:          parseInt
-  , pycor:          parseInt
+  patches: {
+    pcolor:      parseFloat
+  , plabelColor: parseFloat
+  , plabel:      identity
+  , pxcor:       parseInt
+  , pycor:       parseInt
   }
-  'LINKS': {
-    breed:         identity
-  , color:         parseFloat
-  , end1:          identity
-  , end2:          identity
-  , 'hidden?':     parseBool
-  , 'label-color': parseFloat
-  , label:         identity
-  , shape:         parseString
-  , thickness:     parseFloat
-  , 'tie-mode':    parseString
+  links: {
+    breed:      identity
+  , color:      parseFloat
+  , end1:       identity
+  , end2:       identity
+  , isHidden:   parseBool
+  , labelColor: parseFloat
+  , label:      identity
+  , shape:      parseString
+  , thickness:  parseFloat
+  , tieMode:    parseString
   }
-  'OUTPUT': {
+  output: {
     value: parseString
   }
-  'EXTENSIONS': {}
+  extensions: {}
 }
 
-builtInGlobals = ['min-pxcor', 'max-pxcor', 'min-pycor', 'max-pycor', 'perspective', 'subject', 'nextIndex', 'directed-links', 'ticks']
+# END SCHEMA STUFF
 
-oneOutput = (csvBucket, schema) ->
-  converterFromSchema(schema)("value")(csvBucket[0][0])
 
-# (Array[Array[String]], ) => Array[Object[Any]]
-standardParse = (csvBucket, schema) ->
 
-  converter = converterFromSchema(schema)
+# START PARSER STUFF
+
+# Parser[String]
+singletonParse = (csvBucket, schema) ->
+  schema.value(csvBucket[0][0])
+
+# Parser[ImpArr]
+arrayParse = (csvBucket, schema) ->
+
   [keys, rows...] = csvBucket
 
   f =
     (acc, row) ->
       obj = { extraVars: {} }
-      for key, index in keys
+      for rawKey, index in keys
+        key   = csvNameToSaneName(rawKey)
         value = row[index]
         if schema[key]?
-          obj[key] = converter(key)(value)
+          obj[key] = schema[key](value)
         else
-          obj.extraVars[key] = identity(value)
+          obj.extraVars[key] = value
       acc.concat([obj])
 
   foldl(f)([])(rows)
 
-# (Array[Array[Any]], Object[Any]) => Object[Any]
+# Parser[ImpObj]
 globalParse = (csvBucket, schema) ->
-  head = standardParse(csvBucket, schema)[0]
+  head = arrayParse(csvBucket, schema)[0]
   delete head.extraVars
   head
 
+# Parser[ImpObj]
 plotParse = (csvBucket, schema) ->
-  output = {}
-  converter = converterFromSchema(schema)
 
-  output['plots'] = []
-  output['default'] = if csvBucket.length == 0 then null else csvBucket[0][0]
+  output = { default: csvBucket[0]?[0] ? null, plots: [] }
 
-  #Iterate over every plot
+  # Iterate over every plot
   csvIndex = 1
+
   while csvIndex < csvBucket.length
-    plot = {}
-    plot['name'] = parseString(csvBucket[csvIndex][0])
-    csvIndex++
+    plot = { name: parseString(csvBucket[csvIndex++][0]) }
 
     #Parsing of the global attributes in each plot
     for plotAttributeIndex in [0...csvBucket[csvIndex].length]
-      plot[csvBucket[csvIndex][plotAttributeIndex]] = converter(csvBucket[csvIndex][plotAttributeIndex])(csvBucket[csvIndex + 1][plotAttributeIndex])
+      columnName       = csvNameToSaneName(csvBucket[csvIndex    ][plotAttributeIndex])
+      value            =                   csvBucket[csvIndex + 1][plotAttributeIndex]
+      plot[columnName] = schema[columnName](value)
     csvIndex += 2
 
     #Parsing of the attributes of each pen in a plot
@@ -151,7 +190,9 @@ plotParse = (csvBucket, schema) ->
     for penIndex in [0...numPens]
       pen = {}
       for penAttributeIndex in [0...csvBucket[csvIndex].length]
-        pen[csvBucket[csvIndex][penAttributeIndex]] = converter(csvBucket[csvIndex][penAttributeIndex])(csvBucket[csvIndex + penIndex + 1][penAttributeIndex])
+        columnName       = csvNameToSaneName(csvBucket[csvIndex    ][penAttributeIndex])
+        value            =                   csvBucket[csvIndex + 1][penAttributeIndex]
+        pen[columnName] = schema[columName](value)
       pen['points'] = []
       plot['pens'].push(pen)
     csvIndex += 2 + numPens
@@ -163,7 +204,9 @@ plotParse = (csvBucket, schema) ->
         point = {}
         length = csvBucket[csvIndex].length / numPens
         for pointAttributeIndex in [0...length]
-          point[csvBucket[csvIndex][pointAttributeIndex]] = converter(csvBucket[csvIndex][pointAttributeIndex])(csvBucket[csvIndex + pointsIndex][length * penIndex + pointAttributeIndex])
+          columnName        = csvNameToSaneName(csvBucket[csvIndex              ][pointAttributeIndex])
+          value             =                   csvBucket[csvIndex + pointsIndex][pointAttributeIndex + penIndex * length]
+          point[columnName] = schema[columnName](value)
         plot['pens'][penIndex]['points'].push(point)
       pointsIndex++
     csvIndex += pointsIndex
@@ -171,71 +214,91 @@ plotParse = (csvBucket, schema) ->
     output['plots'].push(plot)
   output
 
+# Parser[ImpObj]
 extensionParse = (csvBucket, schema) ->
   output = {}
   extension = ''
   for entry in csvBucket
     item = entry[0]
-    if !item.startsWith('{{')
+    if not item.startsWith('{{')
       extension = item
       output[extension] = []
     else
       output[extension].push(item)
   output
 
-extractGlobals = (globals) ->
-  builtIn = {}
-  user = {}
-  for global of globals
-    if global in builtInGlobals
-      builtIn[global] = globals[global]
-    else
-      user[global] = globals[global]
-  [builtIn, user]
-
+# Object[Parser[Any]]
 buckets = {
-  'RANDOM STATE': oneOutput
-  'GLOBALS': globalParse
-  'TURTLES': standardParse
-  'PATCHES': standardParse
-  'LINKS': standardParse
-  'OUTPUT': oneOutput
-  'PLOTS': plotParse
-  'EXTENSIONS': extensionParse
+  extensions:  extensionParse
+, globals:     globalParse
+, links:       arrayParse
+, output:      singletonParse
+, patches:     arrayParse
+, plots:       plotParse
+, randomState: singletonParse
+, turtles:     arrayParse
 }
 
-module.exports = () ->
+# END PARSER STUFF
 
-  parsedCSV = parse(testCSV, {
-    comment: '#'
-    skip_empty_lines: true
-    relax_column_count: true
-  })
 
-  world = {}
 
-  clusterRows = ([acc, latestRows], bucketName) ->
-    if bucketName of buckets
-      rows = []
-      acc[bucketName] = rows
-      [acc, rows]
-    else if latestRows?
-      latestRows.push(bucketName)
-      [acc, latestRows]
+# (ImpObj, Array[String]) => (ImpObj, Object[String])
+extractGlobals = (globals, knownNames) ->
+  builtIn = {}
+  user    = {}
+  for key, value of globals
+    if key in knownNames
+      builtIn[key] = value
     else
-      [acc, latestRows]
+      user[key] = value
+  [builtIn, user]
 
-  [bucketToRows, _] = foldl(clusterRows)([{}, undefined])(parsedCSV)
+# (String) => WorldState
+module.exports =
+  (csvText) ->
 
-  for key, bucketParser of buckets
-    world[key] = bucketParser(bucketToRows[key], attributeParser[key])
+    parsedCSV = parse(testCSV, {
+      comment: '#'
+      skip_empty_lines: true
+      relax_column_count: true
+    })
 
-  globals = extractGlobals(world["GLOBALS"])
-  world["USER GLOBALS"] = globals[1]
-  world["BUILT-IN GLOBALS"] = globals[0]
-  delete world["GLOBALS"]
+    clusterRows =
+      ([acc, latestRows], row) ->
 
-  world
+        saneName =
+          try
+            if row.length is 1
+              csvNameToSaneName(row[0])
+            else
+              undefined
+          catch ex
+            undefined
+
+        if saneName? and saneName of buckets
+          rows = []
+          acc[saneName] = rows
+          [acc, rows]
+        else if latestRows?
+          latestRows.push(row)
+          [acc, latestRows]
+        else
+          [acc, latestRows]
+
+    [bucketToRows, _] = foldl(clusterRows)([{}, undefined])(parsedCSV)
+
+    world = {}
+
+    for name, bucketParser of buckets
+      world[name] = bucketParser(bucketToRows[name], nameToSchema[name])
+
+    { globals, randomState, turtles, patches, links, output, plots, extensions } = world
+
+    builtInGlobalNames = Object.keys(nameToSchema.globals)
+    [builtInGlobals, userGlobals] = extractGlobals(globals, builtInGlobalNames)
+
+    new WorldState(builtInGlobals, userGlobals, randomState, turtles, patches, links, output, plots, extensions)
 
 testCSV = '''
 "export-world data (NetLogo 6.0-BETA1)"

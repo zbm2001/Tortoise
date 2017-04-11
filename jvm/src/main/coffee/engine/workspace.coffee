@@ -83,12 +83,13 @@ module.exports =
     importWorld = (importFile) =>
 
       worldState = convertCSV()
+      { globals, links, patches, plots, output, turtles } = worldState
 
       # We can safely do breeds beforehand, but not labels or variables or link ends --JAB (4/6/17)
-      for turtle in worldState.TURTLES
+      for turtle in turtles
         turtle.breed = readFromString(turtle.breed)
 
-      for link in worldState.LINKS
+      for link in links
         link.breed = readFromString(link.breed)
 
       reifyLinkEnds = (linkState) ->
@@ -97,28 +98,28 @@ module.exports =
           link.end2 = readFromString(link.end2)
         return
 
-      world.importWorld(worldState, reifyLinkEnds, readFromString)
+      world.importState(worldState, reifyLinkEnds, readFromString)
 
-      for turtle in worldState.TURTLES
+      for turtle in turtles
         trueTurtle = world.turtleManager.getTurtle(turtle.who)
         pairs      = Object.keys(turtle.extraVars).map((k) -> [k, turtle.extraVars[k]])
         mappings   = pairs.concat([['label', turtle.label]])
         mappings.forEach(([key, value]) -> trueTurtle.setVariable(key, readFromString(value)))
 
-      for patch in worldState.PATCHES
+      for patch in patches
         truePatch = world.getPatchAt(patch.pxcor, patch.pycor)
         pairs     = Object.keys(patch.extraVars).map((k) -> [k, patch.extraVars[k]])
         mappings  = pairs.concat([['plabel', patch.plabel]])
         mappings.forEach(([key, value]) -> truePatch.setVariable(key, readFromString(value)))
 
-      for link in worldState.LINKS
+      for link in links
         trueLink = world.linkManager.getLink(link.end1.id, link.end2.id, link.breed.name)
         pairs    = Object.keys(link.extraVars).map((k) -> [k, link.extraVars[k]])
         mappings = pairs.concat([['label', link.label]])
         mappings.forEach(([key, value]) -> trueLink.setVariable(key, readFromString(value)))
 
-      plotManager.importPlots(worldState)
-      outputConfig.write(worldState["OUTPUT"])
+      plotManager.importState(plots)
+      outputConfig.write(output)
 
     {
       selfManager

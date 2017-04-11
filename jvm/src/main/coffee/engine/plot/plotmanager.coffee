@@ -75,10 +75,9 @@ module.exports = class PlotManager
     @_withPlot((plot) -> plot.hasPenWithName(name))
 
   # (Object) => Unit
-  importPlots: (worldJSON) ->
-    worldJSON["PLOTS"]["plots"].forEach((plot) =>
-      @_plotMap[plot["name"].toUpperCase()].importPlot(plot))
-    @setCurrentPlot(worldJSON["PLOTS"]["default"])
+  importState: ({ "default": dfault, plots }) ->
+    plots.forEach((plot) => @_plotMap[plot.name.toUpperCase()].importState(plot))
+    @setCurrentPlot(dfault)
     return
 
   # () => Boolean

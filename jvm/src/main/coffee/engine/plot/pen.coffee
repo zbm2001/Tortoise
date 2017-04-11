@@ -148,12 +148,12 @@ module.exports.Pen = class Pen
     @_points
 
   # (Object) => Unit
-  importPen: ({ color, interval, mode, "pen down?": isPenDown, points, x }) ->
+  importState: ({ color, interval, mode, isPenDown, points, x: penX }) ->
 
     points.forEach(
-      ({ color: pColor, "pen down?": pIsPenDown, x: pX, y: pY }) =>
-        @_points.push(new PlotPoint(pX, pY, (if pIsPenDown then Down else Up), pColor))
-        @_ops.addPoint(pX, pY)
+      ({ color: color, isPenDown, x, y }) =>
+        @_points.push(new PlotPoint(x, y, (if isPenDown then Down else Up), color))
+        @_ops.addPoint(x, y)
         return
     )
 
@@ -168,7 +168,7 @@ module.exports.Pen = class Pen
 
     @setColor(color)
     @setInterval(interval)
-    @_state.leapCounterTo(x)
+    @_state.leapCounterTo(penX)
     @updateDisplayMode(@displayModeFromNumber(mode))
 
     return

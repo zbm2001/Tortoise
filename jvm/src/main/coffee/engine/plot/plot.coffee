@@ -85,15 +85,13 @@ module.exports = class Plot
     @_getPenByName(name)?
 
   # (Object) => Unit
-  importPlot: (plotJSON) ->
-    plotJSON["pens"].forEach((pen) =>
-      newPen = @_createAndReturnTemporaryPen(pen["pen name"])
-      newPen.importPen(pen))
-    @setXRange(plotJSON["x min"], plotJSON["x max"])
-    @setYRange(plotJSON["y min"], plotJSON["y max"])
-    @isAutoplotting = plotJSON["autoplot?"]
-    @setCurrentPen(plotJSON["current pen"])
-    @isLegendEnabled = plotJSON["legend open?"]
+  importState: ({ currentPen, isAutoplot, isLegendOpen, pens, xMax, xMin, yMax, yMin }) ->
+    pens.forEach((pen) => @_createAndReturnTemporaryPen(pen.penName).importState(pen))
+    @isAutoplotting  = isAutoplot
+    @isLegendEnabled = isLegendOpen
+    @setXRange(xMin, xMax)
+    @setYRange(yMin, yMax)
+    @setCurrentPen(currentPen)
     return
 
   # () => Unit

@@ -341,31 +341,32 @@ module.exports =
         @_updater.updated(this)("patchesAllBlack")
       return
 
-    # (Object, (Object[Any]) => Unit, (String) => Agent) => Unit
-    importWorld: (
+    # (WorldState, (Object[Any]) => Unit, (String) => Agent) => Unit
+    importState: (
       {
-        "BUILT-IN GLOBALS": {
-          "directed-links": directedLinks
-        , "max-pxcor": maxPxcor
-        , "max-pycor": maxPycor
-        , "min-pxcor": minPxcor
-        , "min-pycor": minPycor
+        builtInGlobals: {
+          directedLinks: directedLinks
+        , maxPxcor:      maxPxcor
+        , maxPycor:      maxPycor
+        , minPxcor:      minPxcor
+        , minPycor:      minPycor
         , nextIndex
         , perspective
         , subject
         , ticks
         }
-      , LINKS: links
-      , PATCHES: patches
-      , "RANDOM STATE": rngState
-      , TURTLES: turtles
-      , "USER GLOBALS": userGlobals
+      , links
+      , patches
+      , rngState
+      , turtles
+      , userGlobals
       }
     , reifyLinkEnds, reifySubject) ->
 
       @clearAll()
 
       @rng.importRNGState(rngState)
+
       for key, value of userGlobals
         @observer.setGlobal(key, value)
       @ticker.importTicks(ticks)

@@ -69,9 +69,7 @@ module.exports =
     # (Object, Number) => Unit
     importTurtles: (turtleState, nextIndex) ->
       turtleState.forEach(
-        ({ who, color, heading, xcor, ycor, shape, "label-color": labelColor, breed
-         , "hidden?": isHidden, size, "pen-size": penSize, "pen-mode": penMode
-         }) =>
+        ({ who, color, heading, xcor, ycor, shape, labelColor, breed, isHidden, size, penSize, penMode}) =>
 
           newTurtle = @_createTurtle(who, color, heading, xcor, ycor, breed, "", labelColor, isHidden, size, shape)
 
