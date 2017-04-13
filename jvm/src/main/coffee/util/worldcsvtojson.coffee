@@ -166,6 +166,13 @@ globalParse = (csvBucket, schema) ->
 # Parser[ImpObj]
 plotParse = (csvBucket, schema) ->
 
+  parseEntity = (acc, rowIndex, upperBound, valueRowOffset, valueColumnOffset) ->
+    for columnIndex in [0...upperBound]
+      columnName        = csvNameToSaneName(csvBucket[rowIndex                 ][columnIndex])
+      value             =                   csvBucket[rowIndex + valueRowOffset][columnIndex + valueColumnOffset]
+      acc[columnName] = (schema[columnName] ? parseInt)(value)
+    acc
+
   output = { default: csvBucket[0]?[0] ? null, plots: [] }
 
   # Iterate over every plot
@@ -173,46 +180,26 @@ plotParse = (csvBucket, schema) ->
 
   while csvIndex < csvBucket.length
 
-    plot     = { name: parseString(csvBucket[csvIndex++][0]) }
-    penCount = undefined
-
-    # Parsing of the global attributes in each plot
-    for plotAttributeIndex in [0...csvBucket[csvIndex].length]
-      columnName = csvNameToSaneName(csvBucket[csvIndex    ][plotAttributeIndex])
-      value      =                   csvBucket[csvIndex + 1][plotAttributeIndex]
-      if columnName is "numberOfPens"
-        penCount = parseInt(value)
-      else
-        plot[columnName] = schema[columnName](value)
+    plot     = parseEntity({ name: parseString(csvBucket[csvIndex++][0]) }, csvIndex, csvBucket[csvIndex].length, 1, 0)
+    penCount = plot.numberOfPens
+    delete plot.penCount
     csvIndex += 2
 
-    # Parsing of the attributes of each pen in a plot
-    plot.pens = []
-    for penIndex in [0...penCount]
-      pen = {}
-      for penAttributeIndex in [0...csvBucket[csvIndex].length]
-        columnName      = csvNameToSaneName(csvBucket[csvIndex    ][penAttributeIndex])
-        value           =                   csvBucket[csvIndex + 1][penAttributeIndex]
-        pen[columnName] = schema[columnName](value)
-      pen.points = []
-      plot.pens.push(pen)
+    plot.pens = [0...penCount].map((i) -> parseEntity({ points: [] }, csvIndex, csvBucket[csvIndex].length, 1 + i, 0))
     csvIndex += 2 + penCount
 
     # For each pen, parsing of the list of points associated with the pen
     pointsIndex = 1
     while csvIndex + pointsIndex < csvBucket.length and csvBucket[csvIndex + pointsIndex].length isnt 1
+      length = csvBucket[csvIndex].length / penCount
       for penIndex in [0...penCount]
-        point = {}
-        length = csvBucket[csvIndex].length / penCount
-        for pointAttributeIndex in [0...length]
-          columnName        = csvNameToSaneName(csvBucket[csvIndex              ][pointAttributeIndex])
-          value             =                   csvBucket[csvIndex + pointsIndex][pointAttributeIndex + penIndex * length]
-          point[columnName] = schema[columnName](value)
+        point  = parseEntity({}, csvIndex, length, pointsIndex, penIndex * length)
         plot.pens[penIndex].points.push(point)
       pointsIndex++
     csvIndex += pointsIndex
 
     output.plots.push(plot)
+
   output
 
 # Parser[ImpObj]
