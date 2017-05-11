@@ -69,6 +69,25 @@ lazy val tortoise = CrossProject("tortoise", file("."), new CrossType {
   dependsOn(macros % "compile-internal->compile;test-internal->test").
   settings(Depend.settings: _*).
   settings(commonSettings: _*).
+  /*settings(
+    // These settings manage the regeneration of the tortoise-compiler.js source on each build
+    resourceGenerators in Compile +=
+      Def.task {
+        (fullOptJS in Compile in tortoiseJS).value
+        val tortoiseJsFile = (artifactPath in fullOptJS in Compile in tortoiseJS).value
+        val files          = Seq[File](tortoiseJsFile, tortoiseJsFile.getParentFile / (tortoiseJsFile.getName + ".map"))
+        val copies         = files.map((f: File) => (f, resourceManaged.value / f.getName))
+        IO.copy(copies)
+        copies.map(_._2)
+      }.taskValue,
+    cleanGeneratedSources          := { IO.delete(resourceManaged.value) },
+    cleanFiles                     <+= resourceManaged,
+    compile                        <<= (compile in Compile) dependsOn(
+      cleanGeneratedSources,
+      managedResources in Compile,
+      clean in tortoiseJS,
+      fullOptJS in Compile in tortoiseJS)
+  ).*/
   jvmConfigure(_.addSbtFiles(file("travis.sbt"))).
   jvmSettings(FastMediumSlow.settings: _*).
   jvmSettings(Depend.settings: _*).
@@ -76,7 +95,15 @@ lazy val tortoise = CrossProject("tortoise", file("."), new CrossType {
     name :=  "Tortoise",
     (resources in Compile) <<= (resources in Compile).dependsOn {
       Def.task[Seq[File]] {
-        val _          = (fullOptJS in Compile in engineScalaJS).value
+
+        val _ = (fullOptJS in Compile in engineScalaJS).value
+
+        val tortoiseJsFile = (artifactPath in fullOptJS in Compile).value
+        val files          = Seq[File](tortoiseJsFile, tortoiseJsFile.getParentFile / (tortoiseJsFile.getName + ".map"))
+        val copies         = files.map((f: File) => (f, resourceManaged.value / f.getName))
+        IO.copy(copies)
+        copies.map(_._2)
+
         val engineFile = (artifactPath in fullOptJS in Compile in engineScalaJS).value
         val destFile   = (classDirectory in Compile).value / "js" / "tortoise" / "shim" / "engine-scala.js"
         IO.copyFile(engineFile, destFile)
@@ -91,7 +118,9 @@ lazy val tortoise = CrossProject("tortoise", file("."), new CrossType {
              |
              |}).call(this);""".stripMargin
         IO.write(destFile, newContents)
+
         Seq(destFile)
+
       }
     },
     // this ensures that generated test reports are updated each run
@@ -104,6 +133,13 @@ lazy val tortoise = CrossProject("tortoise", file("."), new CrossType {
     name                                 := "TortoiseJS",
     artifactPath in (Compile, fullOptJS) := ((crossTarget in (Compile, fullOptJS)).value / "tortoise-compiler.js"),
     skip in packageJSDependencies        := false, // bundles all dependencies in with generated JS
+    cleanGeneratedSources          := { IO.delete(resourceManaged.value) },
+    cleanFiles                     <+= resourceManaged,
+    compile                        <<= (compile in Compile) dependsOn(
+      cleanGeneratedSources,
+      managedResources in Compile,
+      clean,
+      fullOptJS in Compile),
     testFrameworks                       += new TestFramework("utest.runner.Framework"),
     libraryDependencies                  ++= {
       import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport.toScalaJSGroupID
@@ -140,23 +176,8 @@ lazy val netLogoWeb: Project = (project in file("netlogo-web")).
     name                  := "NetLogoWebJS",
     libraryDependencies   ++= Seq(
       "org.nlogo" % "netlogoheadless" % nlDependencyVersion % "test",
-      "org.scalatest" %% "scalatest" % "2.2.1" % "test"),
-    // these tasks force the regeneration of the tortoise.js source on each build
-    resourceGenerators in Compile += Def.task {
-      (fullOptJS in Compile in tortoiseJS).value
-      val tortoiseJsFile = (artifactPath in fullOptJS in Compile in tortoiseJS).value
-      val files          = Seq[File](tortoiseJsFile, tortoiseJsFile.getParentFile / (tortoiseJsFile.getName + ".map"))
-      val copies         = files.map((f: File) => (f, resourceManaged.value / f.getName))
-      IO.copy(copies)
-      copies.map(_._2)
-    }.taskValue,
-    cleanGeneratedSources          := { IO.delete(resourceManaged.value) },
-    cleanFiles                     <+= resourceManaged,
-    compile                        <<= (compile in Compile) dependsOn(
-      cleanGeneratedSources,
-      managedResources in Compile,
-      clean in tortoiseJS,
-      fullOptJS in Compile in tortoiseJS))
+      "org.scalatest" %% "scalatest" % "2.2.1" % "test")
+    )
 
 lazy val engineScalaJS: Project =
   (project in file("jvm/src/main/scalajs")).
