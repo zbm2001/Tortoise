@@ -32,6 +32,19 @@ if (typeof javax !== "undefined") {
   }
 }
 if (typeof javax !== "undefined") {
+  modelConfig.fileReader = {
+    read: function(filepath) {
+  var Paths = Java.type('java.nio.file.Paths');
+  var Files = Java.type('java.nio.file.Files');
+  var UTF8  = Java.type('java.nio.charset.StandardCharsets').UTF_8;
+  var lines = Files.readAllLines(Paths.get(filepath), UTF8);
+  var out = [];
+  lines.forEach(function(line) { out.push(line); });
+  return out.join("\n");
+}
+  }
+}
+if (typeof javax !== "undefined") {
   modelConfig.output = {
     clear: function() {},
     write: function(str) { context.getWriter().print(str); }
@@ -66,6 +79,7 @@ var SelfManager = workspace.selfManager;
 var SelfPrims = workspace.selfPrims;
 var Updater = workspace.updater;
 var UserDialogPrims = workspace.userDialogPrims;
+var importWorld = workspace.importWorld;
 var plotManager = workspace.plotManager;
 var world = workspace.world;
 var procedures = (function() {
