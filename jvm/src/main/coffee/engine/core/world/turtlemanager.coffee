@@ -40,7 +40,7 @@ module.exports =
         (index) =>
           color   = ColorModel.nthColor(index)
           heading = (360 * index) / num
-          @_createTurtle(@_idManager.next(), color, heading, 0, 0, @_breedManager.get(breedName))
+          @_createNewTurtle(color, heading, 0, 0, @_breedManager.get(breedName))
       )(rangeUntil(0)(num))
       new TurtleSet(turtles)
 
@@ -50,7 +50,7 @@ module.exports =
       turtles = map(=>
         color   = ColorModel.randomColor(@_nextInt)
         heading = @_nextInt(360)
-        @_createTurtle(@_idManager.next(), color, heading, xcor, ycor, @_breedManager.get(breedName))
+        @_createNewTurtle(color, heading, xcor, ycor, @_breedManager.get(breedName))
       )(rangeUntil(0)(num))
       new TurtleSet(turtles)
 
@@ -91,9 +91,13 @@ module.exports =
       @_idManager.suspendDuring(() => @clearTurtles())
       return
 
+    # (Number, Number, Number, Number, Breed, String, Number, Boolean, Number, String, (Updatable) => PenManager) => Turtle
+    _createNewTurtle: (color, heading, xcor, ycor, breed, label, lcolor, isHidden, size, shape, genPenManager) =>
+      @_createTurtle(@_idManager.next(), color, heading, xcor, ycor, breed, label, lcolor, isHidden, size, shape, genPenManager)
+
     # (Number, Number, Number, Number, Number, Breed, String, Number, Boolean, Number, String, (Updatable) => PenManager) => Turtle
-    _createTurtle: (id, color, heading, xcor, ycor, breed, label, lcolor, isHidden, size, shape, genPenManager) =>
-      turtle = new Turtle(@_world, id, @_updater.updated, @_updater.registerPenTrail, @_updater.registerTurtleStamp, @_updater.registerDeadTurtle, @_createTurtle, @_removeTurtle, color, heading, xcor, ycor, breed, label, lcolor, isHidden, size, shape, genPenManager)
+    _createTurtle: (id, color, heading, xcor, ycor, breed, label, lcolor, isHidden, size, shape, genPenManager) ->
+      turtle = new Turtle(@_world, id, @_updater.updated, @_updater.registerPenTrail, @_updater.registerTurtleStamp, @_updater.registerDeadTurtle, @_createNewTurtle, @_removeTurtle, color, heading, xcor, ycor, breed, label, lcolor, isHidden, size, shape, genPenManager)
       @_updater.updated(turtle)(Builtins.turtleBuiltins...)
       @_turtles.push(turtle)
       @_turtlesById[id] = turtle
