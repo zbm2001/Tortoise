@@ -14,9 +14,10 @@ class TestModelDumps extends FunSuite {
       val expected =
         scala.util.Try(Resource.asString(s"/dumps/${model.filename}.js"))
           .getOrElse("").trim
-      val modelContents = io.Source.fromFile(model.path).mkString
-      val compiledModel = CompiledModel.fromNlogoContents(modelContents) valueOr { case NonEmptyList(head, _) => throw head }
-      val actual        = compiledModel.compiledCode.trim
+      val modelContents  = io.Source.fromFile(model.path).mkString
+      implicit val flags = CompilerFlags.Default.copy(generatePolyfills = false)
+      val compiledModel  = CompiledModel.fromNlogoContents(modelContents) valueOr { case NonEmptyList(head, _) => throw head }
+      val actual         = compiledModel.compiledCode.trim
       if (expected != actual) {
         val path = s"target/${model.filename}.js"
         println(s"actual JS written to $path")

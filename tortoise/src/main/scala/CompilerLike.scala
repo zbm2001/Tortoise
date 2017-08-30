@@ -48,7 +48,8 @@ case class CompilerFlags(
   generateUnimplemented:  Boolean,
   onTickCallback:         String           = "function(){}",
   propagationStyle:       PropagationStyle = NoPropagation,
-  optimizationsEnabled:   Boolean          = true
+  optimizationsEnabled:   Boolean          = true,
+  generatePolyfills:      Boolean          = true
   )
 
 object CompilerFlags {

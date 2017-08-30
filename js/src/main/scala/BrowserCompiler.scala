@@ -32,6 +32,8 @@ class BrowserCompiler {
 
   import BrowserCompiler._
 
+  private implicit val compilerFlags = CompilerFlags.Default.copy(generatePolyfills = false)
+
   @JSExport
   def fromModel(compilationRequest: NativeJson): NativeJson = {
     val compilationResult =

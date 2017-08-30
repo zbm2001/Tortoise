@@ -25,6 +25,17 @@ object TortoiseSymbol {
     def toJS:         String      = s"var $provides = tortoise_require('$filePath');"
   }
 
+  case class JsPolyfill(`type`: String, method: String, implementation: String)
+    extends TortoiseSymbol {
+    override def dependencies: Seq[String] = Seq()
+    override val provides:     String      = s"${`type`}.prototype.$method"
+    override def toJS:         String      = s"""if (!$provides) {
+                                                |  Object.defineProperty(${`type`}.prototype, '$method', {
+                                                |    value: $implementation
+                                                |  });
+                                                |}""".stripMargin
+  }
+
   case class JsDepend(provides: String, filePath: String, projection: String, dependencies: Seq[String])
     extends TortoiseSymbol {
     def toJS: String = s"var $provides = tortoise_require('$filePath')$projection(${dependencies.mkString(", ")});"
@@ -42,7 +53,7 @@ object TortoiseSymbol {
   implicit def componentOrdering: Ordering[TortoiseSymbol] =
     new Ordering[TortoiseSymbol] {
       def compare(a: TortoiseSymbol, b: TortoiseSymbol): Int = {
-        val order = Seq(classOf[JsRequire], classOf[JsDepend], classOf[JsStatement], classOf[JsDeclare], classOf[WorkspaceInit])
+        val order = Seq(classOf[JsPolyfill], classOf[JsRequire], classOf[JsDepend], classOf[JsStatement], classOf[JsDeclare], classOf[WorkspaceInit])
         val (classA, classB) = (a.getClass(), b.getClass())
         if (classA == classB)
           Ordering.String.compare(a.provides, b.provides)
